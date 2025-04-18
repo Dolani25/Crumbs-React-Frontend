@@ -1,0 +1,217 @@
+.filter{
+
+    background : rgba(0,0,0,0.5);
+    position : fixed;
+    top:0;
+    left:0;
+    z-index : 99;
+    width : 100vw;
+    min-height: 100vh;
+    padding:1em;
+    display:flex;
+    justify-content: center;
+align-items:center;
+
+
+    }
+ form{
+   background: white;
+border-radius:6px;
+
+  line-height: 2em;
+  color:black ;/*#283038;*/
+}
+
+
+
+
+#submitBtn{
+  width:107%; 
+  margin-top:1.4em; 
+  padding:10px; 
+  
+  background-color: #FE4F30; 
+  margin-bottom:-20vh; 
+  border-radius:5px; 
+  color:white;
+}
+
+   #uploadBox{
+        width: 95vmin;
+        position: fixed;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+        z-index : 50;
+        background  : #ffffff;
+        border-radius : 5px;
+        display : block; /*change to none later oo */
+      }
+      
+  
+.wrapper3{
+  width:100%;
+  
+        background-color: #ffffff;
+        padding: 50px 30px;
+        border-radius: 8px;
+        -webkit-box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+                box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+}
+
+.wrapper3 h3{
+  text-align: center;
+  font-weight: 400;
+  margin-top:-20px !important;
+}
+
+.wrapper3 form{
+  height: 167px;
+  margin: 30px 0 ;
+  margin-top:10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius:5px;
+  border:2px dashed #FE4F30 ;
+}
+
+.wrapper3 form :where(i,p){
+  color :#FE4F30;
+}
+
+.wrapper3 form p{
+  font-size: 16px;
+  margin-top:0px;
+}
+
+section .row{
+  background:#FEA898;
+  list-style: none;
+  padding:15px 20px;
+  display: flex;
+  border-radius: 5px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+
+section .row i{
+  font-size: 30px;
+  color:#FE4F30;
+}
+
+.progress-area .row .content{
+  width:100%;
+  margin-left:15px;
+}
+
+.progress-area .progress-bar{
+  height: 6px;
+  width:100%;
+}
+
+.progress-area .details{
+  display: flex;
+  margin-bottom: 7px;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.uploaded-area .row .content{
+  display:flex;
+  margin-left:15px; /* ithink it should be removed*/
+  align-items:center;
+}
+
+.uploaded-area .fa-check{
+  font-size:16px;
+  color:#FE4F30;
+}
+
+
+section .row .content{
+  width:100%;
+  margin-left:15px;
+}
+section .details span{
+  font-size: 14px;
+}
+
+
+
+
+
+
+
+.progress-area .content .progress-bar{
+  height: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+  background: #fff;
+  border-radius: 30px;
+}
+.content .progress-bar .progress{
+  height: 100%;
+  width: 0%;
+  background: #6990F2;
+  border-radius: inherit;
+}
+.uploaded-area{
+  max-height: 232px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  
+}
+.uploaded-area.onprogress{
+  max-height: 150px;
+}
+.uploaded-area::-webkit-scrollbar{
+  width: 0px;
+}
+.uploaded-area .row .content{
+  display: flex;
+  align-items: center;
+}
+.uploaded-area .row .details{
+  display: flex;
+  margin-left: 15px;
+  flex-direction: column;
+}
+.uploaded-area .row .details .size{
+  color: #404040;
+  font-size: 11px;
+}
+.uploaded-area i.fa-check{
+  font-size: 16px;
+}
+
+
+::selection{
+  color: #fff;
+  background: #6990F2;
+}
+.wrapper3{
+  box-shadow: 7px 7px 12px rgba(0,0,0,0.05);
+}
+
+
+#formUpload :where(i, p){
+  color: #6990F2;
+}
+#formUpload i{
+  font-size: 50px;
+}
+#formUpload p{
+  margin-top: 15px;
+  font-size: 16px;
+}
+
+.item .btn svg{
+  margin-bottom:-6px !important;
+  margin-right : 12px;
+}

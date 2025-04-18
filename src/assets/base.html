@@ -1,0 +1,1415 @@
+<!-- Created by Dolani -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crumbs | {% block title %}{% endblock %}</title>
+    <!-- Google Font -->
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Croissant+One&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<script src="https://kit.fontawesome.com/11114d5bad.js" crossorigin="anonymous"></script>
+
+<script src="https://kit.fontawesome.com/f57ad55ce5.js" crossorigin="anonymous"></script>
+      
+    <style>
+        
+            /* Created by Dolani */
+
+* {
+        padding: 0;
+        margin: 0;
+        -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+        border: none;
+        outline: none;
+        font-family: "Croissant One", sans-serif;
+      }
+
+body,HTML,*{
+/*disable copy and paste*/
+-webkit-user-select: none;
+ -webkit-touch-callout: none;
+ -moz-user-select: none;
+ -ms-user-select: none; 
+user-select: none;
+text-decoration:none;
+
+}
+
+
+
+      body {
+        height: 100vh;
+        background: #ffffff;
+      }
+      .top{
+          background: #283038;
+          height : 10%;
+          padding : 5vmin;
+          display:flex;
+          justify-content:space-between;
+          overflow-x : hidden !important;
+          color : #f1f1f1;
+          position : sticky;
+          top : 0;
+      }
+      
+      .bottom{
+          padding : 4vmin 4.6vmin 22vmin 4.6vmin;
+          text-align: center;
+          
+        
+          background : inherit;
+          height : 90%;
+          overflow-x : hidden !important;
+      }
+      .wrapper {
+        position : absolute;
+        top : 34%;
+        z-index : 95;
+          -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        left: 50%;
+        width: 92vmin;
+        background-color: #ffffff;
+        padding:  3px;
+        border-radius: 30px;
+        
+        -webkit-box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+                box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+      }
+      
+      footer{
+        background-color:#F6F6F6;/*#283038*/
+        -webkit-box-shadow: 0 20px 25px rgba(60, 60, 100, 0.15);
+                box-shadow: 0 20px 25px rgba(60, 60, 100, 0.15);
+                
+        display: flex;
+        border: 1px solid rgba(5,5,5,.15);
+        justify-content : space-around;
+        text-align: center;
+        padding: 5px;
+        border-radius: 13px;
+        position : fixed;
+        bottom : -18px;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        left: 50%;
+        width: 95vmin;
+        color: #D0D0D8;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      #qrCode {
+        width: 40vmin;
+        height: 40vmin;
+        border-radius: 5px;
+        
+        padding: 5px; 
+        background: #07f49e; 
+        opacity: 1;
+        visibility: visible; 
+        box-shadow: 0 10px 25px -10px #07f49e; 
+        transition: 0.1s;
+       display : block;
+       margin : auto;
+      }
+      
+      #output-addr {
+        background-color: #f1f5fc;
+        font-size: 4vmin;
+        font-weight: 400;
+        color: #3f415f;
+        width: 100%;
+        padding: 15px 10px;
+        border-radius: 5px;
+        margin: 20px 0 40px 0;
+      }
+      .btn-container {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-pack: distribute;
+            justify-content: space-between;
+      }
+      .btn-container button {
+        background-color: #3EB489;
+        min-width: 40%;
+        padding: 15px 0;
+        color: #282830;
+        border-radius: 30px;
+        font-size: 3vmin;
+        font-weight: 700;
+      }
+
+    #invisible-btn{
+        background : inherit;
+        font-size : 4.2vmin;
+        margin-left : 4vmin;
+    }
+    
+    #buyBtn{
+        font-size : 4.2vmin;
+    }
+    
+    select{
+        width : 14vmin;
+        background : inherit;
+        color : #888888;
+        margin-left : -5px;
+    }
+    
+    footer button {
+        background-color: inherit;
+        width: 50px;
+        height : 50px;
+        padding: 2px; /* formerly 10px*/
+        color: #282830;/*#D6B9FC*/
+        border-radius: 50%;
+        font-size: 3vmin;
+        font-weight: 400;
+      }
+      
+      footer button:not(:first-child){
+          background : inherit;
+          color: #888888;
+      }
+      
+      .box {
+                    position : relative;
+        margin-bottom : 11px;
+        width: 100%;
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 8px;
+        display : flex;
+        justify-content : space-between;
+        -webkit-box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+                box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+      }
+      
+        .add-box {
+        margin-bottom : 11px;
+        width: 45%;
+        background-color: #FE4F30 ;
+        padding: 14px;
+        text-align : center;
+        color : white;
+        display: block;
+        margin: auto;
+        margin-top:25px;
+        
+        border-radius: 8px;
+        
+        font-size : 14px;
+       font-weight : 400;
+       
+      }
+
+     .tab{
+        display : flex;
+        justify-content : space-between;
+        align-items : center;
+        align-content: center;
+        
+        overflow : hidden;
+        font-size:20px;
+        margin-bottom : 10vmin;
+        padding : 0 1vmin 0 1vmin;
+    
+    }
+    
+  
+    
+    .buy , #addBox, #uploadBox{
+        width: 95vmin;
+        position: fixed;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        left: 50%;
+        top: 50%;
+        z-index : 50;
+        background  : #ffffff;
+        border-radius : 5px;
+        display : none; 
+      }
+      
+      
+      
+            .wrapper2 {
+        width: 100%;
+        background-color: #ffffff;
+        padding: 50px 30px;
+        border-radius: 8px;
+        -webkit-box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+                box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+      }
+      
+      #closeBtn{
+          position : absolute;
+          height : 60px;
+          width : 60px;
+          top : -28px;
+          right : -28px;
+          background : #ffffff;
+          color : grey;
+          border-radius : 50%;
+          font-size : 50px;
+          text-align : center;
+          box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+      }
+      
+      .splash{
+position : fixed;
+
+top : 0;
+font-family: 'Croissant One'!important
+left : 0;
+width : 100vw !important;  /*100vh */
+height : 100vh !important;
+overflow-y : hidden !important;
+background : #101010; 
+
+
+z-index : 1000;
+color : #fff; /*#283038;*/
+text-align : center;
+font-size : 20px;
+font-weight : 700;
+line-height : 98vh;  /*60vh */
+display : flex;
+display : none; /*remove after editing*/
+align-items : center;
+justify-content : center ;
+
+}
+
+.splash.display-none{
+position : fixed;
+top : 0;
+left : 0;
+opacity : 0;
+width : 100%;
+height : 100vh;
+background : black;
+z-index : -10;
+color : white;
+text-align : center;
+line-height : 90vh;
+transition : all 0.5s;
+}
+
+@keyframes fadeIn{
+    to{
+        opacity : 1;
+}
+}
+
+.fade-in{
+    color : #fff; /*#F0F0F0;*/
+    font-family: 'Croissant One', cursive;
+    font-weight : 500;
+    font-size : 2.3em;
+    letter-spacing : -5px;
+    opacity : 0;
+    animation : fadeIn 1s ease-in forwards;
+}
+
+.code {
+     margin-top : 10px; 
+     height : 100%;
+     width : 100%;
+     }
+
+
+.coins{
+    height : 8vh;
+    width : 8vh;
+    border-radius : 50%;   
+}
+
+
+button img{
+    height : 25px;
+    width : 25px
+    color : grey;
+}
+
+#appName h3{
+    
+    font-size : 1.9em;
+    font-weight : 300;
+    letter-spacing : -3px;
+    
+    font-family: 'Croissant One';
+    background: -webkit-linear-gradient(#42BB0C, #40B808);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+
+
+#appName{
+    flex :1.88;
+}
+
+
+#appName img{
+    margin-top:-5px;
+    height : 36px;
+    width : 36px;
+    float: left;
+    
+}
+
+.fas{
+    color: grey;
+    font-size : 24px;
+}
+
+.fa-bars , .hamburger{
+    flex : 1;
+}
+
+
+
+#flexed{
+    display : flex;
+    width:100%;
+    align-items : center;
+    align-content : space-between;
+    justify-content : start;
+    margin-top:1vh;
+    margin-bottom : 3.5vh;
+}
+
+#select2{
+    width :100%;
+    font-size : 110%;
+    font-weight : 600;
+}
+
+.box > div{ display:flex; justify-content:center; } 
+
+.down1{ flex-basis:21.66%; }
+ 
+.down2{ flex-basis:48.33%;
+        margin-top : .8vh;
+}
+
+.down3{ flex-basis:30%;
+        margin-top : .8vh;
+}
+
+#currPrice , #coinPossessed{
+    font-size:92%;
+    font-weight:300;
+    color:grey;
+}
+
+#priceChange{
+    font-size : 85%;
+    color : green;
+}
+
+#priceChangeRed{
+    font-size : 85%;
+    color : red;
+}
+
+.balance-wrapper{
+    display:flex;
+    flex-direction : column;
+    align-items : center;
+    justify-content: center;
+}
+
+.bottom h3{
+  line-height: 2.5em;
+}
+
+.bottom p3{
+  color : #CFCFCF;
+  font-size:15px;
+}
+
+#addBox .wrapper2 form{
+  line-height: 2em;
+  color:black ;/*#283038;*/
+}
+
+#addBox .wrapper2 form h3{
+  margin-bottom:0.8em;
+  font-weight: 400;
+}
+
+#addBox .wrapper2 form label{
+  display:absolute;
+  font-weight: 700;
+  margin :6px !important;
+  
+}
+
+#progress{
+  display: none;
+  margin-top:1.4em;
+}
+
+#progressOut{
+margin: 5px 0 5px 0;
+height:6px;
+width: 100%;
+margin-bottom:4vw;
+background:#3870D8;
+border-radius: 7px;
+
+box-shadow: inset 5px 5px 10px #2b56a6, 
+            inset -5px -5px 10px #458aff;
+}
+
+#progressIn{
+background: #F89038;
+height:6px;
+width:35%;
+border-radius:4px;
+
+
+background: linear-gradient(145deg, #ff9a3c, #df8232);
+box-shadow:  2x 2px 0px #f68f37, 
+             -2px -2px 0px #fa9139;
+}
+
+
+/*Nav styling*/
+nav{
+padding:16px;
+display: none ;
+width:85% !important;
+height:100vh !important;
+color : #101010;
+border-radius: 0px;
+background: #fff;
+z-index:100 !important;
+}
+
+/*Nav animations*/
+nav {
+  -webkit-animation: slideRight 1s;
+  animation: slideRight 1s
+}
+
+@-webkit-keyframes slideRight {
+  from {-webkit-transform: translateX(-50vw);
+             opacity:0;
+} 
+  to {-webkit-transform: translateX(0px)
+        opacity:1;
+}
+}
+  
+@keyframes slideRight {
+  from {transform: translateX(-50vw);
+             opacity:0;
+} 
+  to {transform: translateX(0px);
+        opacity:1;
+}
+}
+
+
+
+#profilePic{
+height:47px;
+width:47px;
+margin-top : -1.5vw;
+margin-bottom:1.8vw;
+border-radius:50%;
+border:1px solid grey;
+
+background: #F6F6F6;
+}
+
+
+#progressOut{
+margin: 5px 0 5px 0;
+height:6px;
+width: 100%;
+margin-bottom:4vw;
+background:#3870D8;
+border-radius: 7px;
+
+box-shadow: inset 5px 5px 10px #2b56a6, 
+            inset -5px -5px 10px #458aff;
+}
+
+#progressIn{
+background: #F89038;
+height:6px;
+width:35%;
+border-radius:4px;
+
+
+background: linear-gradient(145deg, #ff9a3c, #df8232);
+box-shadow:  2x 2px 0px #f68f37, 
+             -2px -2px 0px #fa9139;
+}
+
+#Username{
+font-size:107%;
+color: #101010;
+white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+ul{
+padding:0;
+margin:0;
+list-style-type:none;
+font-weight:bold;
+color:#101010;
+margin:0;
+padding:0;
+font-family: San-serif;
+list-style:none;
+text-decoration: none;
+overflow: hidden;
+}
+
+.fa{
+font-size:26px;
+}
+.fas ,.far{
+color:#6090E0;
+}
+
+
+
+.item{
+overflow: hidden;
+}
+
+.btn{
+display: block;
+padding:16px ; /*formerly 16px 18px*/
+padding-left : 16px;/*10 px before controls padding*/
+background: inherit;
+font-size : 95%;
+font-weight : 400;
+position: relative;
+color:rgba(16,16,16,0.95)!important;
+}
+
+.btn:before{
+content:"";
+position: absolute;
+width:14px;
+height:14px;
+background: inherit;
+left:20px;
+bottom:-7px;
+transform: rotate(45deg);
+}
+
+.btn svg{
+margin-right:26px !important;
+}
+
+.smenu{
+background:#333;
+overflow: hidden;
+transition:max-height 0.3s;
+max-height:0;
+font-size : 95%;
+font-weight : 400;
+color:rgba(16,16,16,0.95)!important
+}
+
+
+
+.colon{
+   margin-top:5px;
+   }
+   
+   .fas{
+      font-size : 19px;
+      margin-right : 4.2px;
+      }
+      
+.filter{
+    background : rgba(0,0,0,0.5);
+    position : fixed;
+    top:0;
+    left:0;
+    z-index : 99;
+    width : 100vw;
+    }
+
+    
+.navtop{
+display: flex;
+justify-content: space-between;
+margin-bottom:10px;
+color:#101010;
+}
+
+.rank_points{
+  display: flex;
+justify-content: space-around;
+margin-bottom:10px;
+color:#101010;
+}
+
+.rank_points h5{
+  height : 40px;
+  width: 40px;
+  background: #D6B9FC;
+  padding : 8px;
+  border-radius:50%;
+}
+
+.wrapper3{
+  width:100%;
+  padding: 30px;
+        background-color: #ffffff;
+        padding: 50px 30px;
+        border-radius: 8px;
+        -webkit-box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+                box-shadow: 0 10px 25px rgba(60, 60, 100, 0.35);
+}
+
+.wrapper3 h3{
+  text-align: center;
+  font-weight: 400;
+}
+
+.wrapper3 form{
+  height: 167px;
+  margin: 30px 0 ;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius:5px;
+  border:2px dashed #FE4F30 ;
+}
+
+.wrapper3 form :where(i,p){
+  color :#FE4F30;
+}
+
+.wrapper3 form p{
+  font-size: 16px;
+  margin-top:15px;
+}
+
+section .row{
+  background:#FEA898;
+  list-style: none;
+  padding:15px 20px;
+  display: flex;
+  border-radius: 5px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+
+section .row i{
+  font-size: 30px;
+  color:#FE4F30;
+}
+
+.progress-area .row .content{
+  width:100%;
+  margin-left:15px;
+}
+
+.progress-area .progress-bar{
+  height: 6px;
+  width:100%;
+}
+
+.progress-area .details{
+  display: flex;
+  margin-bottom: 7px;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.uploaded-area .row .content{
+  display:flex;
+  margin-left:15px; /* ithink it should be removed*/
+  align-items:center;
+}
+
+.uploaded-area .fa-check{
+  font-size:16px;
+  color:#FE4F30;
+}
+
+
+section .row .content{
+  width:100%;
+  margin-left:15px;
+}
+section .details span{
+  font-size: 14px;
+}
+
+
+
+
+
+
+
+.progress-area .content .progress-bar{
+  height: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+  background: #fff;
+  border-radius: 30px;
+}
+.content .progress-bar .progress{
+  height: 100%;
+  width: 0%;
+  background: #6990F2;
+  border-radius: inherit;
+}
+.uploaded-area{
+  max-height: 232px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  
+}
+.uploaded-area.onprogress{
+  max-height: 150px;
+}
+.uploaded-area::-webkit-scrollbar{
+  width: 0px;
+}
+.uploaded-area .row .content{
+  display: flex;
+  align-items: center;
+}
+.uploaded-area .row .details{
+  display: flex;
+  margin-left: 15px;
+  flex-direction: column;
+}
+.uploaded-area .row .details .size{
+  color: #404040;
+  font-size: 11px;
+}
+.uploaded-area i.fa-check{
+  font-size: 16px;
+}
+
+
+::selection{
+  color: #fff;
+  background: #6990F2;
+}
+.wrapper3{
+  box-shadow: 7px 7px 12px rgba(0,0,0,0.05);
+}
+
+
+#formUpload :where(i, p){
+  color: #6990F2;
+}
+#formUpload i{
+  font-size: 50px;
+}
+#formUpload p{
+  margin-top: 15px;
+  font-size: 16px;
+}
+
+.item .btn svg{
+  margin-bottom:-6px !important;
+  margin-right : 12px;
+}
+
+#userVerified{
+  margin-top:-.9vw;
+}
+
+#bell svg{
+  height:24px;
+  width:24px;
+  position:relative;
+}
+
+#notification{
+  font-size:70%;
+  position:absolute;
+  top:5px;
+  right:9.5px;
+  height:18px;
+  width:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(220,0,0,0.9);
+}
+
+a{
+color: inherit;
+outline:none;
+text-decoration:none;
+}
+    </style>
+  </head>
+  <body>
+  
+<!--  S P L A S H S C R E E N-->
+
+<div class="splash">
+<h1 class="fade-in"> Swift</h1>
+</div>
+    <div class="top">
+    <div id="flexed">
+    
+    <!--<i class="fas fa-bars"></i> -->
+    <!--hamburger icon svg-->
+    <div class="hamburger" onclick="toggleNav();"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></div>
+    
+    
+    <span id="appName" >
+        
+        <h3><!--<img src="https://img.icons8.com/color/100/000000/mint.png"/> --> Crumbs</span></h3>
+    </span>
+    
+    <!-- Notification icon svg-->
+    <div>
+    <div id="bell">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"></path></svg></div>
+      <span id="notification">3</span>
+    </div>
+        
+    </div>
+    
+
+    
+      </div>
+      
+      <div class="bottom">
+         {% block content %}
+         {% endblock %}
+          
+      </div>
+      
+      <!-- F O O T E R-->
+      <footer>
+          <button><a href="{% url 'index' %}" ><img src="../images/applebook.svg"/><span>Courses</span></a></button>
+          <button onclick="alert(this.id)"><svg width="25px" height="25px" viewBox="0 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="🔍-Product-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="ic_fluent_library_28_regular" fill="#888888" fill-rule="nonzero">
+            <path d="M3.9997,3 L5.9897,3 C7.04351818,3 7.9078157,3.81639669 7.98421089,4.85080841 L7.9897,5 L7.9897,23 C7.9897,24.0538182 7.17330331,24.9181157 6.13889159,24.9945109 L5.9897,25 L3.9997,25 C2.94588182,25 2.0815843,24.1836033 2.00518911,23.1491916 L1.9997,23 L1.9997,5 C1.9997,3.94618182 2.81609669,3.0818843 3.85050841,3.00548911 L3.9997,3 L5.9897,3 L3.9997,3 Z M10.9947,3 L12.9897,3 C14.0435182,3 14.9078157,3.81639669 14.9842109,4.85080841 L14.9897,5 L14.9897,23 C14.9897,24.0538182 14.1733033,24.9181157 13.1388916,24.9945109 L12.9897,25 L10.9947,25 C9.93992727,25 9.07649752,24.1836033 9.00018319,23.1491916 L8.9947,23 L8.9947,5 C8.9947,3.94618182 9.81018554,3.0818843 10.8453842,3.00548911 L10.9947,3 L12.9897,3 L10.9947,3 Z M20.1303,5.0264 C20.9735941,5.0264 21.7460232,5.56408858 22.0232306,6.38601897 L22.0693,6.5434 L25.9293,22.0264 C26.1851182,23.0487182 25.6026719,24.0847037 24.6168316,24.4098625 L24.4733,24.4514 L22.5103,24.9404 C22.3483,24.9804 22.1853,25.0004 22.0253,25.0004 C21.1810647,25.0004 20.4094661,24.4618256 20.1323596,23.6406247 L20.0863,23.4834 L16.2253,8.0004 C15.9704364,6.97617273 16.552926,5.94101157 17.5387684,5.61680139 L17.6823,5.5754 L19.6453,5.0864 C19.8073,5.0464 19.9703,5.0264 20.1303,5.0264 Z M5.9897,4.5 L3.9997,4.5 C3.75525556,4.5 3.55031728,4.67777778 3.50779328,4.91042524 L3.4997,5 L3.4997,23 C3.4997,23.2444444 3.67747778,23.4493827 3.91012524,23.4919067 L3.9997,23.5 L5.9897,23.5 C6.23503333,23.5 6.43928025,23.3222222 6.48163964,23.0895748 L6.4897,23 L6.4897,5 C6.4897,4.75555556 6.31271235,4.55061728 6.07953813,4.50809328 L5.9897,4.5 Z M12.9897,4.5 L10.9947,4.5 C10.7493667,4.5 10.5451198,4.67777778 10.5027604,4.91042524 L10.4947,5 L10.4947,23 C10.4947,23.2444444 10.6716877,23.4493827 10.9048619,23.4919067 L10.9947,23.5 L12.9897,23.5 C13.2350333,23.5 13.4392802,23.3222222 13.4816396,23.0895748 L13.4897,23 L13.4897,5 C13.4897,4.75555556 13.3127123,4.55061728 13.0795381,4.50809328 L12.9897,4.5 Z M20.1303,6.5264 L20.0688,6.53015 L20.0688,6.53015 L20.0073,6.5414 L18.0453,7.0304 C17.8070778,7.08995556 17.6518185,7.31148642 17.6673137,7.54750288 L17.6813,7.6364 L21.5413,23.1204 C21.6063,23.3804 21.8383,23.5004 22.0253,23.5004 L22.086675,23.496525 L22.086675,23.496525 L22.1473,23.4844 L24.1103,22.9954 C24.3485222,22.9358444 24.5037815,22.7151037 24.4882863,22.4785605 L24.4743,22.3894 L20.6133,6.9054 C20.5483,6.6444 20.3173,6.5264 20.1303,6.5264 Z" id="🎨-Color"></path></g></g></svg><span>Library</span></button>
+          <button><a href="{% url 'feed' %}" ><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16.2 7.8l-2 6.3-6.4 2.1 2-6.3z"/></svg><span>Feed</span></a></button>
+          <button onclick="populate(this.id)"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg><span>Chat</span></button>
+          
+          <button onclick="populate(this.id)"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M12 2L15.6 5.6C18 -0.7 24.7 6 18.4 8.4L22 12L18.4 15.6C16 9.3 9.3 16 15.6 18.4L12 22L8.4 18.4C6 24.7 -0.7 18 5.6 15.6L2 12L5.6 8.4C8 14.7 14.7 8 8.4 5.6L12 2Z" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg><span>Quiz</span></button>
+      </footer>
+
+            <!-- ADD WALLET BOX-->
+            <div class="filter">
+            <div id="addBox">
+        <div class="wrapper2">
+         
+        
+        <form>
+           <h3>Choose an upload source</h3>
+  <input type="radio" id="option1" name="Location" value="Local Docs">
+  <label for="option1">Local Docs</label><br>
+
+  <input type="radio" id="option2" name="Location" value="Google Drive">
+  <label for="option2">Google Drive</label><br>
+
+  
+        </form>
+        
+        
+        <button id="continue" style="width:100%; margin-top:1.4em; padding:10px; background-color: #FE4F30; border-radius:5px; color:white;" onclick="addWallet()">Continue</button>
+        </div>
+            </div>
+            </div>
+            
+            <!-- UPLOAD BOX -->
+            <!--
+<div class="filter">
+  <div id="uploadBox">
+    <div class="wrapper3">
+      <h3>Choose an upload source</h3>
+      <form action="{% url 'uploadfile' %}" class="fileUpload" method="post" >
+        {% csrf_token %}
+        <input type="file" name="file" multiple="true" accept=".pdf,.docx,.txt" hidden />
+        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#FE4F30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.2 15c.7-1.2 1-2.5.7-3.9-.6-2-2.4-3.5-4.4-3.5h-1.2c-.7-3-3.2-5.2-6.2-5.6-3-.3-5.9 1.3-7.3 4-1.2 2.5-1 6.5.5 8.8m8.7-1.6V21" />
+          <path d="M16 16l-4-4-4 4" />
+        </svg>
+        <p>Browse files to upload </p>
+        <button type="submit" id="submitBtn" style="width:100%; margin-top:1.4em; padding:10px; display:absolute; background-color: #FE4F30; margin-bottom:-20vh; border-radius:5px; color:white;">Upload Docs</button>
+      </form>
+      <section class="progress-area"></section>
+      <section class="uploaded-area"></section>
+    </div>
+  </div>
+</div>
+
+       
+ -->
+ 
+ <!-- UPLOAD BOX --> 
+ <div class="filter"> 
+ <div id="uploadBox">
+  <div class="wrapper3"> 
+  <h3>Choose an upload source</h3>
+  <form class="fileUpload" method="post" action="{% url 'uploadfile' %}" enctype="multipart/form-data" >
+  {% csrf_token %}
+  <input class="file-input" type="file" name="file" accept=".pdf, .txt"  hidden> <!-- file upload icon--> <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#FE4F30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 15c.7-1.2 1-2.5.7-3.9-.6-2-2.4-3.5-4.4-3.5h-1.2c-.7-3-3.2-5.2-6.2-5.6-3-.3-5.9 1.3-7.3 4-1.2 2.5-1 6.5.5 8.8m8.7-1.6V21"/><path d="M16 16l-4-4-4 4"/>
+  </svg>
+        <p>Browse files to upload </p>
+        <button type="submit" id="submitBtn" style="width:100%; margin-top:1.4em; padding:10px; display:absolute; background-color: #FE4F30; margin-bottom:-20vh; border-radius:5px; color:white;">Upload Docs</button>
+      </form>
+      <section class="progress-area"></section>
+      <section class="uploaded-area"></section>
+    </div>
+  </div>
+</div>
+
+<!--F I L T E R -->
+
+<div class= "filter">
+<!-- NAV BAR -->
+<nav id="nav" >
+<span class="navtop">
+
+<div class="circle">
+<img  id="profilePic" src="{{user.profile_picture.src}}" alt="profilePic">
+</div>
+<!--"https://i.postimg.cc/dt3jTywq/profile-Pic.jpg" -->
+
+<span id="userVerified">
+
+{% if user.is_authenticated %} 
+<span id="Username"> {{user.username}}</span>
+{% else %} 
+<p>You are not logged in</p> 
+<a href="{% url 'login' %}">Log In</a> 
+
+{% endif %}
+
+
+<h5><font weight="bold" color="#6090E0">VERIFIED</font></h5>
+
+</span>
+
+<!-- COG SVG-->
+<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#6090E0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> <a href="#" ></a></i> 
+
+</span>
+<ul>
+
+<div class="rank_points">
+
+<h5 style="background:#DDE2F8;"><svg fill="#3975ED" height="24px" width="24px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 220 220" xml:space="preserve">
+<path d="M220,98.865c0-12.728-10.355-23.083-23.083-23.083s-23.083,10.355-23.083,23.083c0,5.79,2.148,11.084,5.681,15.14
+	l-23.862,21.89L125.22,73.002l17.787-20.892l-32.882-38.623L77.244,52.111l16.995,19.962l-30.216,63.464l-23.527-21.544
+	c3.528-4.055,5.671-9.344,5.671-15.128c0-12.728-10.355-23.083-23.083-23.083C10.355,75.782,0,86.137,0,98.865
+	c0,11.794,8.895,21.545,20.328,22.913l7.073,84.735H192.6l7.073-84.735C211.105,120.41,220,110.659,220,98.865z"/>
+</svg></h5>
+
+<h5><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#8A51FF" stroke="#8A51FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></h5>
+
+</div>
+
+<div class="rank_points">
+
+<h4>32</h4>
+
+<h4>459</h4>
+
+</div>
+
+
+<ul class ="Btnlist">
+
+<li class = "item" id="community">
+<a href="{% url 'profile' username=user.username %}"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Profile</a>
+</li>
+
+<li class = "item" id="earn">
+<a href="#earn"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2zM21.18 8.02c-1-2.3-2.85-4.17-5.16-5.18"/></svg>Activity</a>
+</li>
+
+<li class = "item" id="wallet">
+<a href="#wallet"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>Bookmarks</a>
+</li>
+
+<li class = "item" id="trans">
+<a href="#trans"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11.5" cy="8.5" r="5.5"/><path d="M11.5 14v7"/></svg>Pinned</a>
+</li>
+
+<li class = "item" id="news">
+<a href="#news" class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>Nearby Users</a>
+</li>
+
+<li class = "item" id="message">
+<a href="#message"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Planner</a>
+</li>
+
+
+<li class = "item" id="about">
+<a href="#about"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>About</a>
+</li>
+
+<li class = "item" id="logout">
+<a href="#logout"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>Sign out</a>
+</li>
+
+
+<li class = "item" id="logout">
+<a href="#logout"  class ="btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#888888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>Light Mode</a>
+</li>
+
+</ul>
+
+</nav>
+
+</div>
+            
+            
+            
+    
+    <!-- Script -->
+    <script>
+    
+    
+ 
+      let generateBtn = document.getElementById("generate-btn");
+      let buyBtn = document.getElementById("buyBtn");
+      let addBtn = document.getElementById("add");
+      let uploadBox = document.getElementById("uploadBox");
+      let addBox = document.getElementById("addBox");
+      let buyBox = document.getElementById("buy"); 
+      let outputAddr = document.getElementById("output-addr");
+      let box1 = document.getElementById("box1");
+      let box2 = document.getElementById("box2");
+      let box3 = document.getElementById("box3");
+      let qrCode = document.getElementById("qrCode");
+      let closeBtn = document.getElementById("closeBtn");
+      let copyBtn = document.getElementById("copy-btn");
+      let code = document.querySelector('.code'); 
+      let toast = document.querySelector('#qrCode');
+      let walletString = "0123456789abcdef";
+      
+      
+
+      let randomColor = () => {
+        let walletAddr  = "0x";
+        for (i = 0; i < 40; i++) {
+          walletAddr += walletString[Math.floor(Math.random() * walletString.length)];
+        }
+        return walletAddr;
+      }; 
+
+      let generateGrad = () => {
+        let address = randomColor();
+        outputAddr.value = `${address}` ; 
+        var data = address ;
+        var url = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${data}`;
+        code.src = url;
+        
+      };
+
+        let addWallet = () =>{
+            addBox.style.display="none"
+            uploadBox.style.display="block"
+            
+        };
+        
+      
+
+        let uploadDocs = (id) =>{
+          document.getElementById(id).style.display="none"
+          document.getElementById("progress").style.display="block"
+        };
+
+    
+      addBtn.addEventListener("click", () => { 
+        addBox.style.display ="block";
+      });
+      
+      copyBtn.addEventListener("click", () => {
+        outputAddr.select();
+        document.execCommand("copy");
+        alert( "Code Copied To Clipboard" + ` ${outputAddr.value}`);
+      });
+
+      
+      closeBtn.addEventListener("click", () => {
+        buyBox.style.display ="none";
+      });
+
+      generateBtn.addEventListener("click", generateGrad);
+      window.onload = generateGrad;
+      const splash = document.querySelector(".splash");
+
+document.addEventListener("DOMContentLoaded" , (e)=>{
+    setTimeout(()=>{
+        splash.classList.add("display-none");
+} , 8000);
+});
+
+
+!function(t,e){
+"use strict";
+"function"!=typeof t.CustomEvent&&(t.CustomEvent=function(t,n){n=n||{bubbles:!1,cancelable:!1,detail:void 0};var a=e.createEvent("CustomEvent");return a.initCustomEvent(t,n.bubbles,n.cancelable,n.detail),a},t.CustomEvent.prototype=t.Event.prototype),e.addEventListener("touchstart",function(t){if("true"===t.target.getAttribute("data-swipe-ignore"))return;s=t.target,r=Date.now(),n=t.touches[0].clientX,a=t.touches[0].clientY,u=0,i=0},!1),e.addEventListener("touchmove",function(t){if(!n||!a)return;var e=t.touches[0].clientX,r=t.touches[0].clientY;u=n-e,i=a-r},!1),e.addEventListener("touchend",function(t){if(s!==t.target)return;var e=parseInt(l(s,"data-swipe-threshold","20"),10),o=parseInt(l(s,"data-swipe-timeout","500"),10),c=Date.now()-r,d="",p=t.changedTouches||t.touches||[];Math.abs(u)>Math.abs(i)?Math.abs(u)>e&&c<o&&(d=u>0?"swiped-left":"swiped-right"):Math.abs(i)>e&&c<o&&(d=i>0?"swiped-up":"swiped-down");if(""!==d){var b={dir:d.replace(/swiped-/,""),touchType:(p[0]||{}).touchType||"direct",xStart:parseInt(n,10),xEnd:parseInt((p[0]||{}).clientX||-1,10),yStart:parseInt(a,10),yEnd:parseInt((p[0]||{}).clientY||-1,10)};s.dispatchEvent(new CustomEvent("swiped",{bubbles:!0,cancelable:!0,detail:b})),s.dispatchEvent(new CustomEvent(d,{bubbles:!0,cancelable:!0,detail:b}))}n=null,a=null,r=null},!1);var n=null,a=null,u=null,i=null,r=null,s=null;function l(t,n,a){for(;t&&t!==e.documentElement;){var u=t.getAttribute(n);if(u)return u;t=t.parentNode}return a}}(window,document);
+
+document.addEventListener('swiped-left', function(e) {
+target = e.target;
+if(target.tagName != 'DIV'){
+target.parentElement.style.right="100px";
+}
+target.style.right="100px";
+// element that was swiped console.log(e.detail); // see event data below 
+});
+
+document.addEventListener('swiped-right', function(e) {
+target = e.target;
+if(target.tagName != 'DIV'){
+target.parentElement.style.right="0px";
+}
+target.style.right="0px";
+
+
+ // element that was swiped console.log(e.detail); // see event data below 
+});
+
+
+/* controlling NAV BAR and detection of swipes */
+
+function toggleNav(){
+var nav = document.getElementById("nav");
+
+nav.style.display = "block";
+
+}
+
+
+
+/*
+
+// Created by Good_Bits
+
+
+/*
+
+    :CREDITS:
+    
+    SWIPE DETECTOR V1.1
+    Made By Good_Bits
+    :)
+
+*/
+
+let SwipeDetector = (function(){
+    let touchStart = null ;
+    let lastTouch = null ;
+    let timeout = 500 ;
+    let threshold = 50 ;
+    let eventHandlers = [] ;
+    let lastTime = NaN;
+    let disabled = false ;
+    
+    class vec2D{
+        constructor(x,y){
+            this.x = x ;
+            this.y = y;
+        }
+        
+        mag(){
+            return Math.sqrt(this.x**2+this.y**2);
+        }
+    }
+
+    function vec2DSubtract(a,b){
+        return (new vec2D(a.x-b.x,a.y-b.y))
+    }
+    
+    function handleTouchStart(event){
+        touchStart = new vec2D(
+            event.touches[0].clientX,
+            event.touches[0].clientY
+        );
+        lastTime = Date.now();
+    }
+    
+    function handleTouchMove(event){
+        lastTouch = new vec2D(
+            event.touches[0].clientX,
+            event.touches[0].clientY
+        );
+    }
+    
+    function handleTouchEnd(event){
+        if(disabled === true) return ;
+        lastTouch = lastTouch || touchStart ;
+        let swipeVector = vec2DSubtract(touchStart,lastTouch);
+        let eventName = "";
+        let timeDiff = Date.now() - lastTime;
+        if(swipeVector.mag() < threshold || 
+        timeDiff > timeout)
+            return ;
+        if(Math.abs(swipeVector.x) > Math.abs(swipeVector.y)){
+           eventName = (swipeVector.x < 0)?"swipeRight":"swipeLeft";
+        }else {
+           eventName = (swipeVector.y < 0)?"swipeDown":"swipeUp";
+        }
+        
+        if(typeof eventHandlers[eventName] === "function"){
+            eventHandlers[eventName](
+            touchStart,
+            lastTouch);
+        }
+    }
+    
+    // add eventlisteners to window
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove",handleTouchMove);
+    window.addEventListener("touchend",handleTouchEnd);
+    return {
+        addEventListener : function(event,handler){
+            eventHandlers[event] = handler ;
+        },
+        setSwipeThreshold : function(value){
+            threshold = (value>0)?value:50;
+        },
+        setSwipeTimeout : function(value){
+            timeout = (value>0)?value:500;
+        },
+        disable : function(){
+            disabled = true;
+        },
+        enable : function(){
+            disabled = false;
+        }
+    };
+    
+})();
+
+
+
+
+
+
+
+
+
+
+
+
+/* JS used */
+
+SwipeDetector.addEventListener(
+    "swipeRight",
+    () => {
+        nav.style.display="block";
+    }
+);
+
+SwipeDetector.addEventListener(
+    "swipeLeft",
+    () => {
+        nav.style.display= "none";
+    }
+);
+
+
+/* FILE UPLOAD LOGIC */
+const form = document.querySelector(".fileUpload");
+
+fileInput = document.querySelector(".file-input");
+progressArea = document.querySelector(".progress-area");
+uploadedArea = document.querySelector(".uploaded-area");
+
+form.addEventListener("click", () =>{
+  fileInput.click();
+});
+
+fileInput.onchange = ({target})=>{
+  let file = target.files[0];
+  if(file){
+    let fileName = file.name;
+    if(fileName.length >= 12){
+      let splitName = fileName.split('.');
+      fileName = splitName[0].substring(0, 13) + "... ." + splitName[1];
+    }
+    uploadFile(fileName);
+  }
+}
+
+function uploadFile(name){
+  let xhr = new XMLHttpRequest();
+  xhr.open("POST", "{% url 'uploadfile' %}");
+  xhr.upload.addEventListener("progress", ({loaded, total}) =>{
+    let fileLoaded = Math.floor((loaded / total) * 100);
+    let fileTotal = Math.floor(total / 1000);
+    let fileSize;
+    (fileTotal < 1024) ? fileSize = fileTotal + " KB" : fileSize = (loaded / (1024*1024)).toFixed(2) + " MB";
+    let progressHTML = `<li class="row">
+                          <!-- file icon -->
+               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FE4F30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+                          <div class="content">
+                            <div class="details">
+                              <span class="name">${name} • Uploading</span>
+                              <span class="percent">${fileLoaded}%</span>
+                            </div>
+                            <div class="progress-bar">
+                              <div class="progress" style="width: ${fileLoaded}%"></div>
+                            </div>
+                          </div>
+                        </li>`;
+    uploadedArea.classList.add("onprogress");
+    progressArea.innerHTML = progressHTML;
+    if(loaded == total){
+      progressArea.innerHTML = "";
+      let uploadedHTML = `<li class="row">
+                            <div class="content upload">
+                              <!-- file icon -->
+               <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FE4F30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+                              <div class="details">
+                                <span class="name">${name} • Uploaded</span>
+                                <span class="size">${fileSize}</span>
+                              </div>
+                            </div>
+                            <i class="fas fa-check"></i>
+                          </li>`;
+      uploadedArea.classList.remove("onprogress");
+      uploadedArea.insertAdjacentHTML("afterbegin", uploadedHTML);
+    }
+  });
+  let data = new FormData(form);
+  xhr.send(data);
+}
+    
+
+
+
+</script>
+  </body>
+</html>

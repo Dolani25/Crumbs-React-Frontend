@@ -1,0 +1,38 @@
+header{
+  background: #283038;
+          height : 10%;
+          padding : 5vmin;
+          display:flex;
+          justify-content:space-between;
+          overflow-x : hidden !important;
+          color : #f1f1f1;
+          position : sticky;
+          top : 0;
+          width:100%;
+    /*align-items : center;*/
+    align-content : space-between;
+    /*justify-content : start;*/
+   
+    margin-bottom : 3.5vh;
+}
+
+#bell{
+  width:24px;
+  height:24px;
+  position:relative;
+}
+
+#notifications{
+  font-size:70%;
+  position:absolute;
+  top:-3.8px;
+  right:-2.7px;
+  height:18px;
+  width:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(220,0,0,0.9);
+}
+

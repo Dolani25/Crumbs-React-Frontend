@@ -1,0 +1,39 @@
+      footer{
+        background-color:#F6F6F6;/*#283038*/
+        -webkit-box-shadow: 0 20px 25px rgba(60, 60, 100, 0.15);
+                box-shadow: 0 20px 25px rgba(60, 60, 100, 0.15);
+                
+        display: flex;
+        border: 1px solid rgba(5,5,5,.15);
+        justify-content : space-around;
+        text-align: center;
+        padding: 5px;
+        border-radius: 13px;
+        position : fixed;
+        bottom : -18px;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        left: 50%;
+        width: 95vmin;
+        color: #D0D0D8;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      
+          footer button {
+        background-color: inherit;
+        width: 50px;
+        height : 50px;
+        padding: 2px; /* formerly 10px*/
+        color: #282830;/*#D6B9FC*/
+        border-radius: 50%;
+        font-size: 3vmin;
+        font-weight: 400;
+      }
+      
+      footer button:not(:first-child){
+          background : inherit;
+          color: #888888;
+      }
+      

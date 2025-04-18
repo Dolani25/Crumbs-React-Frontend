@@ -1,0 +1,83 @@
+{/*
+const Note = () => {
+  return (
+    <div className="note">
+      <ScrollProgress />
+      <Tooltip />
+      <h1>Ordinary Differential Equation (ODE)</h1>
+      <p>
+        An Ordinary Differential Equation is a mathematical equation that relates a function to its derivatives with respect to one or more independent variables.
+      </p>
+      <p>
+        <code className="code">dy/dx = f(x, y)</code>
+      </p>
+      <p>Where:</p>
+      <ul>
+        <li>
+          <code>dy/dx</code> represents the derivative of the function <code>y</code> with respect to the independent variable <code>x</code>.
+        </li>
+        <li>
+          <code>f(x, y)</code> defines how the rate of change of <code>y</code> depends on the values of <code>x</code> and <code>y</code>.
+        </li>
+      </ul>
+
+      <pre>
+        <div className="code">
+          function handleTouchMove(event)&#123;
+          <br />
+          &nbsp;&nbsp;lastTouch = new vec2D(
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;event.touches[0].clientX,
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;event.touches[0].clientY
+          <br />
+          &nbsp;&nbsp;);
+          <br />
+          &#125;
+        </div>
+      </pre>
+
+     <MathJaxContext>
+      <div className="math">
+        <MathJax>{"x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}"}</MathJax>
+      </div>
+    </MathJaxContext>
+  
+
+      <VideoPlayer src="gh.mp4" />
+      <AudioPlayer src="your-audio.mp3" />
+      <ImageViewer src="profilePic.jpg" alt="Profile Picture" />
+
+      <div className="next">Next</div>
+    </div>
+  );
+};
+
+const Reader = () => {
+  useEffect(() => {
+    // Prevent default right-click context menu
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    // Speech synthesis
+    if ("speechSynthesis" in window) {
+      const message = new SpeechSynthesisUtterance(
+        document.body.textContent
+      );
+      message.voice = window.speechSynthesis.getVoices()[0];
+      window.speechSynthesis.speak(message);
+    }
+  }, []);
+
+  return (
+    <div className="Reader">
+    <div clasaName="readerBody">
+      <Header />
+      <Note />
+    </div>
+    </div>
+  );
+  
+  
+  
+  */}
+  

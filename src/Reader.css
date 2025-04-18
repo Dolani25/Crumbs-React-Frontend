@@ -1,0 +1,245 @@
+/* Reader.css */
+
+.reader-rroot {
+  scroll-behavior: smooth;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin:0;
+  margin-top:-3.1vh;
+  font-family: system-ui, sans-serif;
+  padding:6px;
+}
+
+.reader-rroot ::selection {
+  background-color: orange;
+}
+
+/* Header Styles */
+.reader-rroot  .ffiltered-div {
+          position: relative;
+            width: 100%;
+            max-width: 100%;
+            height: 10.9vh !important;
+            background: url('./assets/profilePic.jpg') center/cover;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box; /* Include padding in the width calculation */
+            color: white; /* Set font color to white */
+            /*disable copy and paste*/
+-webkit-user-select: none;
+ -webkit-touch-callout: none;
+ -moz-user-select: none;
+ -ms-user-select: none; 
+user-select: none;
+text-decoration:none;
+
+        }
+
+.reader-rroot .content-wwrapper {
+          top:0;
+          height: 100%;
+          box-sizing: border-box;
+          position: absolute;
+          
+            padding: 12px 20px;/* Increase the padding for space between content and border */
+            text-align: center;
+            width: 100%;
+            line-height: 0.9; /* Adjust line-height to reduce vertical space */
+            z-index: 10;
+            
+        }
+
+.reader-rroot .filtter {
+          top:0;
+          height: 100%;
+          box-sizing: border-box;
+          position: absolute;
+          background: rgba(0,0,0,0.4);
+            width: 100%;
+            z-index: 5;
+        }
+.reader-rroot .ttopic, .llesson, #ccourse {
+            letter-spacing: 0;
+            word-spacing: -1px;
+            margin: 0; /* Remove any default margin */
+            
+        }
+        
+.reader-rroot #ccourse{
+  font-size:100%;
+}
+
+/* Typography */
+.reader-rroot .ttopic {
+  text-align: center;
+  font-weight: 700;
+  font-size: 100%;
+  margin: 0;
+  
+}
+
+.reader-rroot .llesson,
+.reader-rroot #ccourse {
+  font-size: 60%;
+  margin: 0;
+  
+}
+
+.reader-rroot .llesson {
+  text-align: right;
+}
+
+
+
+
+/* Content Styles */
+.reader-rroot .nnote {
+  padding: 20px 10px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.reader-rroot .ccode {
+  padding: 10px;
+  border-radius: 3px;
+  background: #101010;
+  color: white;
+  font-size: 79%;
+  line-height: 1.7;
+  font-family: monospace;
+}
+
+/* Media Elements */
+.reader-rroot video,
+.reader-rroot audio {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.reader-rroot img {
+  display: block;
+  margin: 2vh auto;
+  height: 25vh;
+  width: 80%;
+  box-shadow: 0 10px 15px rgba(10, 10, 10, 0.5);
+  border-radius: 3px;
+}
+
+.reader-rroot .vvideo-container {
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* Progress Indicator */
+.reader-rroot #pprogress {
+  height: 70px;
+  width: 70px;
+  position: fixed;
+  bottom: 20px;
+  right: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+}
+
+.reader-rroot #pprogress-value {
+  height: calc(100% - 15px);
+  width: calc(100% - 15px);
+  background: white;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  color: #011d33;
+}
+
+/* Tooltip Styles */
+.reader-rroot .tooltip {
+  position: absolute;
+  z-index: 11;
+  background: #101010;
+  border-radius: 5px;
+  padding: 0 10px;
+  color: white;
+  display: none;
+  border: 1px solid #ccc;
+  list-style: none;
+}
+
+.reader-rroot .tooltip li {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid #606060;
+  cursor: pointer;
+}
+
+.reader-rroot .tooltip li:hover {
+  background: #303030;
+}
+
+.reader-rroot .tooltip::after {
+  content: "";
+  display: block;
+  border: 5px solid;
+  border-color: #101010 transparent transparent transparent;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Next Button */
+.reader-rroot .nnext {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3vh;
+  padding: 16px 0;
+  width: 100%;
+  border-radius: 8px;
+  color: white;
+  background: #101010;
+}
+
+/* MathJax Styling */
+.reader-rroot .mmath {
+  font-size: 24px;
+  color: green;
+  margin: 20px 0;
+}
+
+/* Animations */
+@keyframes reader-scale {
+  50% {
+    transform: scale(0.92);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .reader-rroot #pprogress {
+    height: 60px;
+    width: 60px;
+  }
+  
+  .reader-rroot #pprogress-value {
+    font-size: 20px;
+  }
+}
+
+/* Reset conflicting global styles */
+.reader-rroot h1 {
+  font-size: 120% !important;
+  margin: 1em 0 !important;
+}
+
+.reader-rroot p {
+  margin: 1em 0 !important;
+}

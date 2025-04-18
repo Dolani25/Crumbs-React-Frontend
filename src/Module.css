@@ -1,0 +1,44 @@
+.module-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.module-page h1{
+  font-size:120%;
+  margin-top:-3vh;
+  margin-bottom:2vh;
+}
+
+.container {
+  padding: 0 0 0 10px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 400px;
+}
+
+.subtopic {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.subtopic > div {
+  height: 55px;
+  width: 55px;
+  border-radius: 50%;
+  background: #bada55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.subImg {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}

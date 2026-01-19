@@ -32,17 +32,6 @@ router.get('/', async (req, res) => {
 // @desc    Get course by ID with full hierarchy
 // @access  Public (for now)
 router.get('/:id', async (req, res) => {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-        // MOCK MODE: Return single dummy course
-        return res.json({
-            _id: req.params.id,
-            title: 'Mock Course Details',
-            description: 'This is a mock response because DB is offline.',
-            topics: []
-        });
-    }
-
     try {
         const course = await Course.findById(req.params.id);
         if (!course) {

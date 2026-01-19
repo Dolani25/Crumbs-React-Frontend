@@ -17,8 +17,6 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- DATABASE CONNECTION ---
 // Global Connection Mode Tracker
-global.connectionMode = 'mock'; // default
-
 const connectDB = async () => {
     // 1. Try Remote URI (Prioritize Environment Variable)
     if (process.env.MONGO_URI) {
@@ -27,19 +25,13 @@ const connectDB = async () => {
                 serverSelectionTimeoutMS: 5000
             });
             console.log(`✅ MongoDB Connected (Remote): ${conn.connection.host}`);
-            global.connectionMode = 'remote';
             return;
         } catch (err) {
             console.error(`❌ Remote DB Connection Failed: ${err.message}`);
-            // In Production, we might want to exit: process.exit(1);
-            // But for resilience, we'll fall back to mock if needed, or just log error.
         }
     } else {
         console.warn("⚠️ No MONGO_URI found. Database features will not work.");
     }
-
-    // 2. Fallback (Only useful for local dev, but safe to keep)
-    global.connectionMode = 'mock';
 };
 
 connectDB();

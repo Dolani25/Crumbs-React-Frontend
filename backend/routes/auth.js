@@ -13,11 +13,7 @@ router.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
     const mongoose = require('mongoose');
 
-    // MOCK MODE: Return fake token if DB down
-    if (mongoose.connection.readyState !== 1) {
-        console.log("☁️ [Mock Auth] DB disconnected. Returning mock signup.");
-        return res.json({ token: 'mock-token-dev-mode' });
-    }
+    // MOCK MODE check removed
 
     try {
         // 1. Check if user exists
@@ -67,11 +63,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const mongoose = require('mongoose');
 
-    // MOCK MODE: Return fake token if DB down
-    if (mongoose.connection.readyState !== 1) {
-        console.log("☁️ [Mock Auth] DB disconnected. Returning mock login.");
-        return res.json({ token: 'mock-token-dev-mode' });
-    }
+    // MOCK MODE check removed
 
     try {
         // 1. Check if user exists
@@ -115,17 +107,7 @@ router.get('/me', auth, async (req, res) => {
     const mongoose = require('mongoose');
 
     // MOCK MODE: Return fake user if DB down
-    if (mongoose.connection.readyState !== 1) {
-        return res.json({
-            _id: 'mock-user-id',
-            username: 'Dev User',
-            email: 'dev@test.com',
-            xp: 1200,
-            streak: 5,
-            planner: [],
-            connectionMode: global.connectionMode || 'mock'
-        });
-    }
+    // (Removed per user request)
 
     try {
         const user = await User.findById(req.user.id).select('-passwordHash');
@@ -179,9 +161,7 @@ router.post('/xp', auth, async (req, res) => {
     } catch (err) {
         console.error(err.message);
         // Mock fallback check
-        if (require('mongoose').connection.readyState !== 1) {
-            return res.json({ xp: (amount || 0) + 100, streak: 1, msg: "Mock XP Added" });
-        }
+        // Mock fallback check removed
         res.status(500).send('Server Error');
     }
 });

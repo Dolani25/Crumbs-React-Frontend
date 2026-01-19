@@ -75,6 +75,7 @@ export const loadUser = async () => {
 
 export const logout = () => {
     localStorage.removeItem('crumbs_token');
+    localStorage.removeItem('crumbs_courses'); // Fix: Privacy Leak
 };
 
 export const updateXP = async (amount, action) => {

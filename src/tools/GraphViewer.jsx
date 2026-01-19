@@ -1,9 +1,29 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+import React, { useState, useRef, useEffect } from 'react';
+import D3LineChart from './d3-charts/LineChart';
+import D3BarChart from './d3-charts/BarChart';
+import D3Treemap from './d3-charts/Treemap';
+import D3Sunburst from './d3-charts/Sunburst';
 
-const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey = "name", dataKey = "value" }) => {
+const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey, dataKey }) => {
+    const containerRef = useRef(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-    // Default demo data if none provided
+    // 1. Responsive Logic
+    useEffect(() => {
+        const observeTarget = containerRef.current;
+        if (!observeTarget) return;
+
+        const resizeObserver = new ResizeObserver(entries => {
+            if (!entries || entries.length === 0) return;
+            const { width, height } = entries[0].contentRect;
+            setDimensions({ width, height });
+        });
+
+        resizeObserver.observe(observeTarget);
+        return () => resizeObserver.unobserve(observeTarget);
+    }, []);
+
+    // 2. Default Data & Key Logic
     const defaultData = [
         { name: 'Jan', value: 400 },
         { name: 'Feb', value: 300 },
@@ -13,65 +33,34 @@ const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey =
         { name: 'Jun', value: 900 },
         { name: 'Jul', value: 1000 },
     ];
-
     const chartData = data || defaultData;
-    const color = "#FE4F30"; // App theme color
 
-    // Auto-detect keys if defaults don't exist in data
-    let activeXKey = xKey;
-    let activeDataKey = dataKey;
-
-    if (chartData.length > 0) {
-        const firstItem = chartData[0];
-        if (!firstItem.hasOwnProperty(activeXKey)) {
-            // Try common alternatives
-            if (firstItem.hasOwnProperty('x')) activeXKey = 'x';
-            else if (firstItem.hasOwnProperty('label')) activeXKey = 'label';
-            else if (firstItem.hasOwnProperty('year')) activeXKey = 'year';
-            else activeXKey = Object.keys(firstItem)[0]; // Fallback to first key
-        }
-        if (!firstItem.hasOwnProperty(activeDataKey)) {
-            // Try common alternatives
-            if (firstItem.hasOwnProperty('y')) activeDataKey = 'y';
-            else if (firstItem.hasOwnProperty('value')) activeDataKey = 'value';
-            else if (firstItem.hasOwnProperty('count')) activeDataKey = 'count';
-            else activeDataKey = Object.keys(firstItem)[1] || Object.keys(firstItem)[0];
-        }
-    }
-
+    // 3. Render Chart Switch
     const renderChart = () => {
+        const { width, height } = dimensions;
+        if (width === 0 || height === 0) return null;
+
+        const commonProps = {
+            data: chartData,
+            width,
+            height,
+            color: "#FE4F30"
+        };
+
         switch (type.toLowerCase()) {
-            case 'area':
-                return (
-                    <AreaChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                        <XAxis dataKey={activeXKey} stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                        <Area type="monotone" dataKey={activeDataKey} stroke={color} fill={color} fillOpacity={0.2} />
-                    </AreaChart>
-                );
+            case 'treemap':
+                return <D3Treemap {...commonProps} />;
+            case 'sunburst':
+            case 'pie': // Sunburst handles circular hierarchy
+            case 'donut':
+                return <D3Sunburst {...commonProps} />;
             case 'bar':
-                return (
-                    <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                        <XAxis dataKey={activeXKey} stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: '#f5f5f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                        <Bar dataKey={activeDataKey} fill={color} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                );
-            default: // Line
-                return (
-                    <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                        <XAxis dataKey={activeXKey} stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                        <Legend />
-                        <Line type="monotone" dataKey={activeDataKey} stroke={color} strokeWidth={3} dot={{ r: 4, fill: color }} activeDot={{ r: 6 }} />
-                    </LineChart>
-                );
+            case 'column':
+                return <D3BarChart {...commonProps} />;
+            case 'area':
+            case 'line':
+            default:
+                return <D3LineChart {...commonProps} />;
         }
     };
 
@@ -82,7 +71,8 @@ const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey =
             background: '#fff',
             borderRadius: '16px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #f0f0f0'
+            border: '1px solid #f0f0f0',
+            fontFamily: 'Inter, sans-serif'
         }}>
             <div style={{
                 display: 'flex',
@@ -95,19 +85,18 @@ const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey =
                     {title}
                 </h4>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', color: '#666' }}>
-                        Interactive
+                    <span style={{ fontSize: '0.75rem', padding: '4px 8px', background: '#f5f5f5', borderRadius: '6px', color: '#666', fontWeight: 500 }}>
+                        Powered by D3.js 🚀
                     </span>
                 </div>
             </div>
 
-            <div style={{ width: '100%', height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                    {renderChart()}
-                </ResponsiveContainer>
+            <div ref={containerRef} style={{ width: '100%', height: 320 }}>
+                {renderChart()}
             </div>
+
             <p style={{ fontSize: '0.8rem', color: '#999', marginTop: '15px', textAlign: 'center' }}>
-                Hover over data points to see details.
+                Interactive Visualization
             </p>
         </div>
     );

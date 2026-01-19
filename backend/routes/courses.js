@@ -189,6 +189,14 @@ router.post('/sync', auth, async (req, res) => {
 
         courses.forEach(course => {
             const { _id, ...courseData } = course;
+
+            // SAFETY CHECK: Do not sync courses that belong to another user
+            // This prevents "Data Contamination" if LocalStorage was shared
+            if (course.createdBy && course.createdBy.toString() !== userId) {
+                console.warn(`⚠️ Skipping sync for foreign course: "${course.title}" (Owner: ${course.createdBy})`);
+                return;
+            }
+
             const existing = existingMap.get(course.title);
 
             // CONFLICT RESOLUTION: Last Write Wins

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Viewer</title>
+    <!-- 3Dmol.js -->
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #fff;
+            font-family: sans-serif;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #888;
+        }
+
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FE4F30;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container"></div>
+    <div id="loading">Loading Structure...</div>
+    <div id="error">Molecule Not Found</div>
+
+    <script>
+    // 1. Get Molecule from Query Param
+    const urlParams = new URLSearchParams(window.location.search);
+    const molecule = urlParams.get('molecule') || 'water';
+
+    // 2. Map Common Names to CID (PubChem ID) or PDB ID
+    // We try to query PubChem by name if possible, or support direct CIDs.
+    // For simplicity, we'll try to fetch SDF from PubChem by name.
+    
+    // PubChem CACTUS resolver is unreliable for CORS sometimes. 
+    // We'll use 3Dmol's built-in loading if possible, or fetch from PubChem.
+
+    const init = async () => {
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const element = document.getElementById('container');
+        
+        // Initialize Viewer
+        const config = { backgroundColor: 'white' };
+        const viewer = $3Dmol.createViewer(element, config);
+        
+        try {
+            // PubChem URL for 3D SDF (Conformer)
+            // https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${name}/SDF?record_type=3d
+            
+            // "water" -> "water" works.
+            const pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${molecule}/SDF?record_type=3d`;
+            
+            const response = await fetch(pubchemUrl);
+            if (!response.ok) throw new Error('Molecule not found');
+            
+            const sdfData = await response.text();
+            
+            if (sdfData.includes("Status: 404")) throw new Error("404");
+
+            viewer.addModel(sdfData, "sdf");
+            viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } }); // Ball and Stick
+            viewer.zoomTo();
+            viewer.render();
+            
+            loading.style.display = 'none';
+
+        } catch (e) {
+            console.error(e);
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            error.innerText = `Could not load structure for "${molecule}".\nTry a simpler name (e.g., "aspirin", "gold").`;
+        }
+    };
+
+    init();
+
+    </script>
+
+</body>
+
+</html>

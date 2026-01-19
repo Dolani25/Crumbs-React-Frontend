@@ -1,0 +1,116 @@
+.auth-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #0f172a;
+    /* Slate 900 */
+    font-family: 'Inter', sans-serif;
+    color: white;
+}
+
+.auth-card {
+    background: #1e293b;
+    /* Slate 800 */
+    padding: 40px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+    background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.auth-subtitle {
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 30px;
+    font-size: 0.95rem;
+}
+
+.auth-error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    /* Fix padding expanding width */
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #818cf8;
+}
+
+.auth-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s;
+    margin-top: 10px;
+}
+
+.auth-btn:hover {
+    filter: brightness(1.1);
+}
+
+.auth-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.auth-footer span {
+    color: #818cf8;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.auth-footer span:hover {
+    text-decoration: underline;
+}

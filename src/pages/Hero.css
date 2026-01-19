@@ -1,0 +1,217 @@
+/* Hero.css */
+.hero-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-color: #0f172a;
+    /* Slate 900 */
+    overflow: hidden;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.6;
+    /* Dim the graph so text pops */
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, transparent 0%, #0f172a 90%);
+    pointer-events: none;
+    /* Let clicks pass to graph */
+}
+
+.hero-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+.logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.login-btn {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.login-btn:hover {
+    color: white;
+}
+
+.cta-btn-small {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.2s;
+}
+
+.cta-btn-small:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 5;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 20px;
+    margin-top: -40px;
+    /* Slight visual offset upwards */
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+}
+
+.highlight-text {
+    background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: #94a3b8;
+    max-width: 600px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+.cta-group {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 60px;
+}
+
+.main-cta {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    padding: 16px 32px;
+    border-radius: 30px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.main-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+}
+
+.secondary-cta {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 16px 32px;
+    border-radius: 30px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: background 0.2s;
+}
+
+.secondary-cta:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.hero-stats {
+    display: flex;
+    gap: 60px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 30px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .cta-group {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .hero-stats {
+        gap: 30px;
+    }
+}

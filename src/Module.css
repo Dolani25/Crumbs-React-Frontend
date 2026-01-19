@@ -4,41 +4,152 @@
   margin: 0 auto;
 }
 
-.module-page h1{
-  font-size:120%;
-  margin-top:-3vh;
-  margin-bottom:2vh;
+.module-page h1 {
+  font-size: 120%;
+  margin-top: -3vh;
+  margin-bottom: 2vh;
 }
 
+/* Container adjustments */
 .container {
-  padding: 0 0 0 10px;
   display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(3, 1fr);
-  min-height: 400px;
+  grid-template-columns: 1fr 1fr;
+  /* Strict 2 columns */
+  row-gap: 50px;
+  /* Vertical gap between rows */
+  padding: 0 1vw;
+  /* 1vw from edge */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .subtopic {
-  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Center bubble in its cell (default) */
+  position: relative;
+  text-align: center;
+  width: 60px;
+  /* Bubble width */
+  overflow: visible;
+  /* Grid handles spacing, margin not strictly needed but safe */
+  margin-bottom: 30px;
 }
 
-.subtopic > div {
-  height: 55px;
-  width: 55px;
+/* 
+  Top Item: Spans across both columns and Centers
+*/
+.subtopic:first-child {
+  grid-column: 1 / -1;
+  /* Span all */
+  justify-self: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* 
+   Items 2, 4, 6... (Even index in DOM, but Odd in Grid flow logic?)
+   Since first-child is Item 1.
+   Item 2 is next. 
+   Grid auto-placement fills row by row.
+   Item 2 -> Col 1.
+   Item 3 -> Col 2.
+   Item 4 -> Col 1.
+*/
+
+/* Left Column Items (2nd, 4th, 6th...) */
+.subtopic:nth-child(even) {
+  justify-self: start;
+  /* Push to Far Left */
+}
+
+/* Right Column Items (3rd, 5th, 7th...) */
+/* Note: :not(:first-child) is redundant if we use odd/even correctly but safest */
+.subtopic:nth-child(odd):not(:first-child) {
+  justify-self: end;
+  /* Push to Far Right */
+}
+
+/* Text Styling */
+.subtopic p {
+  position: absolute;
+  top: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 105px;
+  /* Enough for 2 words */
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  word-wrap: break-word;
+  pointer-events: none;
+}
+
+/* RESET Top Item text (Static flow) */
+.subtopic:first-child p {
+  position: static;
+  transform: none;
+  width: auto;
+  max-width: 250px;
+  margin-top: 5px;
+}
+
+/* Reset any specific positioning classes */
+.subtopic.pos-center,
+.subtopic.pos-left,
+.subtopic.pos-right {
+  grid-column: auto;
+  grid-row: auto;
+  justify-self: auto;
+}
+
+
+.subtopic>div {
+  height: 60px;
+  /* Slightly larger click area */
+  width: 60px;
   border-radius: 50%;
-  background: #bada55;
+  background: #e0e7ff;
+  /* Soft Indigo Tint */
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Add subtle shadow */
+  /* Ensure content stays inside */
 }
 
 .subImg {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+}
+
+/* Ensure the link inside the bubble centers its content (the icon) */
+.subtopic>div a {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+}
+
+/* Icon specific alignment - Reset line-height to avoid offset */
+.subtopic>div a i {
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  -webkit-text-stroke: 1px;
+  /* Thicken the icons */
 }

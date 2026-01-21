@@ -74,10 +74,11 @@ You have access to the following tools. Attach them in the `tool` property of th
       ```json
       {
         "title": "Topic Title",
-        "script": "function setup() { createCanvas(800, 450); } function draw() { background(0); fill(255); textSize(32); text('Topic', 50, 50); }"
+        "script": "function setup() { let cnv = createCanvas(800, 450); cnv.parent('manim-canvas-container'); } function draw() { background(0); fill(255); textSize(32); text('Topic', 50, 50); }"
       }
       ```
     - **CRITICAL**: The `script` string must be valid **Javascript**.
+    - **CRITICAL**: You MUST attach the canvas to the container: `let cnv = createCanvas(w, h); cnv.parent('manim-canvas-container');`
     - **API**: Use **P5.js Global Mode** syntax (`setup()`, `draw()`, `createCanvas()`, `ellipse()`, `rect()`).
     - **Goal**: Visualize the concept using geometric shapes and animations.
     - **Constraint**: Do NOT use `import` or `require`. Use standard math (`Math.sin`, etc.).

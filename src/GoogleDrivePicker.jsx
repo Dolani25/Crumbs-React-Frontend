@@ -8,7 +8,7 @@ const CLIENT_ID = '541014598474-38hqmv8ham4suipdflhn1v4fasg73isb.apps.googleuser
 const APP_ID = 'crumbs-485020';
 
 // Scopes for the picker to access files
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file';
 
 function GoogleDrivePicker({ onFilePicked, onCancel }) {
     const [isApiLoaded, setIsApiLoaded] = useState(false);

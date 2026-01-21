@@ -16,21 +16,19 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- DATABASE CONNECTION ---
-// Global Connection Mode Tracker
 const connectDB = async () => {
-    // 1. Try Remote URI (Prioritize Environment Variable)
     if (process.env.MONGO_URI) {
         try {
             const conn = await mongoose.connect(process.env.MONGO_URI, {
                 serverSelectionTimeoutMS: 5000
             });
-            console.log(`✅ MongoDB Connected (Remote): ${conn.connection.host}`);
-            return;
+            console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         } catch (err) {
             console.error(`❌ Remote DB Connection Failed: ${err.message}`);
+            // Explicitly do NOT fallback to mock mode.
         }
     } else {
-        console.warn("⚠️ No MONGO_URI found. Database features will not work.");
+        console.error("❌ No MONGO_URI found. Server requires Database.");
     }
 };
 

@@ -10,15 +10,7 @@ const ContentEngine = require('../services/ContentEngine');
 // @desc    Get all courses (public or enrolled)
 // @access  Public
 router.get('/', async (req, res) => {
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-        // MOCK MODE: Return dummy courses
-        return res.json([
-            { _id: '1', title: 'Mock Course: Intro to AI', description: 'Generated in Mock Mode', progress: 45, image: { url: 'https://picsum.photos/seed/ai/200/300' } },
-            { _id: '2', title: 'Mock Course: React Basics', description: 'Generated in Mock Mode', progress: 10, image: { url: 'https://picsum.photos/seed/react/200/300' } }
-        ]);
-    }
-
+    // STRICT MODE: We rely on standard DB connection.
     try {
         const courses = await Course.find({ isPublic: true }).select('-topics.subtopics.crumbId'); // Light payload
         res.json(courses);
@@ -52,6 +44,21 @@ router.get('/:id', async (req, res) => {
 // @access  Private
 router.post('/', auth, async (req, res) => {
     const { title, description, icon, color } = req.body;
+
+    // MOCK MODE: Return generic success if DB is down
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+        return res.json({
+            _id: 'mock-id-' + Date.now(),
+            title,
+            description,
+            icon,
+            color,
+            createdBy: 'mock-user-id',
+            topics: [],
+            isMock: true
+        });
+    }
 
     try {
         const newCourse = new Course({

@@ -96,17 +96,17 @@ function GoogleDrivePicker({ onFilePicked, onCancel }) {
                 .addView(view)
                 .addView(new window.google.picker.DocsUploadView())
                 .setDeveloperKey(DEVELOPER_KEY)
-                .setCallback(pickerCallback)
+                .setCallback((data) => pickerCallback(data, oauthToken))
                 .build();
             picker.setVisible(true);
         }
     };
 
-    const pickerCallback = async (data) => {
+    const pickerCallback = async (data, oauthToken) => {
         if (data.action === window.google.picker.Action.PICKED) {
             const fileId = data.docs[0].id;
             const fileName = data.docs[0].name;
-            const oauthToken = window.gapi.client.getToken().access_token;
+            // Token passed directly, no need for gapi.client.getToken()
 
             console.log('Picked file:', fileName, fileId);
             fetchContent(fileId, oauthToken, fileName);

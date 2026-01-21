@@ -1,7 +1,8 @@
 import React from 'react';
 // import { Player } from '@remotion/player'; // DEPRECATED: Remotion
 // import { VideoComposition } from './Composition'; // DEPRECATED: Remotion
-import RuntimePlayer from '../MotionCanvas/RuntimePlayer';
+// import RuntimePlayer from '../MotionCanvas/RuntimePlayer';
+import ManimVisualizer from '../ManimVisualizer';
 
 const VideoExplainer = ({ data }) => {
     // Data contains: { title, scenes: [...] }
@@ -33,7 +34,7 @@ const VideoExplainer = ({ data }) => {
                         }}>
                             AI Generated
                         </span>
-                        <span>• Motion Canvas Engine 🎨</span>
+                        <span>• Manim JS Engine 📐</span>
                     </div>
                 </div>
             </div>
@@ -45,7 +46,8 @@ const VideoExplainer = ({ data }) => {
                 aspectRatio: '16/9',
                 background: 'black'
             }}>
-                <RuntimePlayer data={data} />
+                {/* <RuntimePlayer data={data} /> */}
+                <ManimVisualizer scriptContent={data?.script || ""} />
             </div>
 
             <div style={{ marginTop: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

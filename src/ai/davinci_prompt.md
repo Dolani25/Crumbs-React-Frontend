@@ -69,30 +69,18 @@ You have access to the following tools. Attach them in the `tool` property of th
     - **Format**: Use standard Desmos/LaTeX syntax (e.g., `y = x^2`, `y = \\sin(x)`, `x^2 + y^2 = 10`).
     - **CRITICAL**: Ensure all parentheses are balanced. Avoid complex Javascript-like syntax (e.g. no `Math.sqrt`, use `\\sqrt{...}`).
 4.  **`concept-graph`**: For complex relationships or broad overviews.
-5.  **`video-explainer`**: **CogniFlow Director Protocol** (Use for processes, derivations, or complex systems).
-    - **Role**: You are the CogniFlow Video Director. Translate topics into 30-60s visual narratives.
+5.  **`video-explainer`**: **Manim/P5.js Animation Engine**
     - **Structure (`data` object)**:
       ```json
       {
-        "title": "Catchy Title",
-        "audio_script": "Full narration text...",
-        "scenes": [
-            {
-               "type": "INTRO" | "ANALOGY" | "FORMULA" | "3D_MODEL" | "SUMMARY",
-               "durationFrames": 150, // 30fps (150 = 5s)
-               "text_overlay": "Short text",
-               "visual_asset": "Lucide Icon Name ('Wind', 'Zap') OR 'sphere'/'torus' for 3D",
-               "background_color": "#Hex",
-               "formula_latex": "E=mc^2" // Optional (FORMULA only)
-            }
-        ]
+        "title": "Topic Title",
+        "script": "function setup() { createCanvas(800, 450); } function draw() { background(0); fill(255); textSize(32); text('Topic', 50, 50); }"
       }
       ```
-    - **Protocol**:
-      1. **Hook (INTRO)**: Start bold.
-      2. **Bridge (ANALOGY)**: Connect to user interest (e.g. F1, Music).
-      3. **Rigor (FORMULA/3D)**: Show the math/structure.
-      4. **Visuals**: Use valid Lucide icon names.
+    - **CRITICAL**: The `script` string must be valid **Javascript**.
+    - **API**: Use **P5.js Global Mode** syntax (`setup()`, `draw()`, `createCanvas()`, `ellipse()`, `rect()`).
+    - **Goal**: Visualize the concept using geometric shapes and animations.
+    - **Constraint**: Do NOT use `import` or `require`. Use standard math (`Math.sin`, etc.).
 6.  **`physics-sandbox`**: **Rapier Physics Engine (3D)**
     - Use for **Dynamics/Forces** (Gravity, Collisions, Projectiles).
     - Mode A: `{ "mode": "sandbox" }` (Generic gravity lab).

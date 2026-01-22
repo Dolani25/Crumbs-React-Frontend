@@ -76,12 +76,16 @@ const ManimVisualizer = ({ scriptContent }) => {
                     const script = document.createElement('script');
                     script.id = 'manim-user-script';
                     script.text = `
+                        // 1. Definition Phase
                         try {
-                            // 1. Definition Phase
                             ${modifiedScript}
                             console.log("ManimVisualizer: Script definition executed.");
+                        } catch (e) {
+                            console.error("ManimVisualizer: Script Definition Error:", e);
+                        }
 
-                            // 2. Execution Phase
+                        // 2. Execution Phase
+                        try {
                             // Check if the user defined the "RequestGeneration" class (New Standard)
                             if (typeof RequestGeneration === 'function') {
                                 console.log("ManimVisualizer: Found RequestGeneration class. Launching P5 Instance Mode...");
@@ -121,7 +125,7 @@ const ManimVisualizer = ({ scriptContent }) => {
                                 }
                             }
                         } catch (e) {
-                            console.error("ManimVisualizer: Runtime Script Error:", e);
+                            console.error("ManimVisualizer: Runtime Execution Error:", e);
                         }
                     `;
                     document.body.appendChild(script);

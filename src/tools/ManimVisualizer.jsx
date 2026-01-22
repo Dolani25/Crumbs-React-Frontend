@@ -8,21 +8,22 @@ const ManimVisualizer = ({ scriptContent }) => {
     useEffect(() => {
         const loadScripts = async () => {
             const scripts = [
-                '/src/tools/manim/lib/p5/p5.min.js', // Corrected path from clone
-                // Manim Libs (Order matters!)
-                '/src/tools/manim/src/globals.js',
-                '/src/tools/manim/src/utils.js',
-                '/src/tools/manim/src/graphics.js',
-                '/src/tools/manim/src/text.js',
-                '/src/tools/manim/src/timer.js',
-                '/src/tools/manim/src/proto.js',
-                '/src/tools/manim/src/math.js',
-                '/src/tools/manim/src/3d.js', // Added 3d support
-                '/src/tools/manim/src/brain.js',
+                '/manim/lib/p5/p5.min.js', // Core dependency
+                // Manim Libs
+                '/manim/src/globals.js',
+                '/manim/src/proto.js',
+                '/manim/src/math.js',
+                '/manim/src/graphics.js',
+                '/manim/src/utils.js',
+                '/manim/src/text.js',
+                '/manim/src/timer.js',
+                '/manim/src/3d.js',
+                '/manim/src/brain.js',
             ];
 
             try {
                 for (const src of scripts) {
+                    // Check if already loaded by tag to prevent duplicates
                     if (!document.querySelector(`script[src="${src}"]`)) {
                         await new Promise((resolve, reject) => {
                             const script = document.createElement('script');
@@ -34,55 +35,87 @@ const ManimVisualizer = ({ scriptContent }) => {
                         });
                     }
                 }
-                setIsLoaded(true);
+                // Small delay to ensure p5 global namespace is ready
+                setTimeout(() => setIsLoaded(true), 100);
             } catch (err) {
                 console.error("Manim Load Error:", err);
                 setError(err.message);
             }
         };
 
-        // We need P5.js first. If not in project, we might need to add it to index.html or download it.
-        // For now, assuming p5 is available or user adds it.
-        // Actually, let's use a CDN for p5 to be safe if local missing.
-        if (!window.p5) {
-            const p5Script = document.createElement('script');
-            p5Script.src = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js';
-            p5Script.async = false;
-            p5Script.onload = loadScripts;
-            document.body.appendChild(p5Script);
-        } else {
-            loadScripts();
-        }
+        loadScripts();
 
     }, []);
 
     useEffect(() => {
         if (isLoaded && containerRef.current) {
-            // Initialize Manim/P5 sketch here
-            // The Manim.js lib typically looks for a canvas or creates one.
-            // We need to see how to trigger the animation.
-            // Usually it uses a 'setup' and 'draw' global function or instance mode.
-
-            // For now, we just indicate readiness.
-            console.log("Manim Environment Loaded");
+            console.log("Manim Environment Loaded. ScriptContent length:", scriptContent ? scriptContent.length : "N/A");
 
             if (scriptContent) {
+                console.log("ManimVisualizer: Original Script:", scriptContent);
+
+                // 1. Force Parenting & Sizing via Regex
+                // Replaces: createCanvas(w, h) 
+                // With:    createCanvas(w, h).parent('manim-canvas-container').style('width', '100%').style('height', '100%')
+                // This handles various spacing: createCanvas ( 400, 400 )
+                let modifiedScript = scriptContent.replace(
+                    /createCanvas\s*\(([^)]+)\)/g,
+                    "createCanvas($1).parent('manim-canvas-container').style('width', '100%').style('height', '100%')"
+                );
+
+                // Fallback: If AI generated invalid p5 (e.g. no createCanvas), this won't break anything, just might not parent.
+
+                console.log("ManimVisualizer: Modified Script:", modifiedScript);
+
                 // Remove existing user script if any
                 const existingScript = document.getElementById('manim-user-script');
                 if (existingScript) existingScript.remove();
 
-                const script = document.createElement('script');
-                script.id = 'manim-user-script';
-                script.text = scriptContent;
-                document.body.appendChild(script);
+                // Reset p5 instance if possible
+                if (window.remove) window.remove();
 
-                console.log("Manim Script Injected");
+                try {
+                    const script = document.createElement('script');
+                    script.id = 'manim-user-script';
+                    script.text = `
+                        try {
+                            ${modifiedScript}
+                            console.log("ManimVisualizer: Script executed successfully");
+                            // Try to manually trigger p5 setup if it hasn't run
+                            if (typeof setup === 'function') {
+                                console.log("ManimVisualizer: Found setup(). Triggering P5...");
+                                new p5(); // Re-init global mode p5
+                            }
+                        } catch (e) {
+                            console.error("ManimVisualizer: Runtime Script Error:", e);
+                        }
+                    `;
+                    document.body.appendChild(script);
+                } catch (e) {
+                    console.error("ManimVisualizer: Injection Error:", e);
+                }
             }
         }
     }, [isLoaded, scriptContent]);
 
     if (error) return <div style={{ color: 'red' }}>Error loading Manim Engine: {error}</div>;
     if (!isLoaded) return <div>Loading Physics Engine...</div>;
+
+    if (!scriptContent) {
+        return (
+            <div style={{
+                width: '100%', height: '100%', minHeight: '400px', background: '#111',
+                color: '#666', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'monospace', textAlign: 'center', padding: '20px'
+            }}>
+                <i className="las la-code" style={{ fontSize: '3rem', marginBottom: '10px', opacity: 0.5 }}></i>
+                <p>No visualization script found.</p>
+                <p style={{ fontSize: '0.8rem', marginTop: '10px', color: '#fbbf24' }}>
+                    Click "Regenerate" to create a new animation.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div

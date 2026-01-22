@@ -6,6 +6,8 @@ const LineChart = ({ data, width, height, color = "#FE4F30" }) => {
 
     useEffect(() => {
         if (!data || data.length === 0 || !width || !height) return;
+        const firstItem = data[0];
+        if (!firstItem || typeof firstItem !== 'object') return;
 
         // Clear previous render
         const svg = d3.select(svgRef.current);
@@ -18,7 +20,7 @@ const LineChart = ({ data, width, height, color = "#FE4F30" }) => {
 
         // 2. Setup Scales
         // Detect keys: assume first key is X (name/label) and second is Y (value)
-        const keys = Object.keys(data[0]);
+        const keys = Object.keys(firstItem);
         const xKey = keys.find(k => ['name', 'label', 'year', 'date', 'x'].includes(k.toLowerCase())) || keys[0];
         const yKey = keys.find(k => ['value', 'count', 'amount', 'y'].includes(k.toLowerCase())) || keys[1];
 

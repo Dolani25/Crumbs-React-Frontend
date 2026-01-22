@@ -74,13 +74,60 @@ You have access to the following tools. Attach them in the `tool` property of th
       ```json
       {
         "title": "Topic Title",
-        "script": "function setup() { let cnv = createCanvas(800, 450); cnv.parent('manim-canvas-container'); } function draw() { background(0); fill(255); textSize(32); text('Topic', 50, 50); }"
+        "script": "function setup() { createCanvas(800, 450); } function draw() { background(0); fill(255); textSize(32); text('Topic', 50, 50); }"
       }
       ```
     - **CRITICAL**: The `script` string must be valid **Javascript**.
-    - **CRITICAL**: You MUST attach the canvas to the container: `let cnv = createCanvas(w, h); cnv.parent('manim-canvas-container');`
-    - **API**: Use **P5.js Global Mode** syntax (`setup()`, `draw()`, `createCanvas()`, `ellipse()`, `rect()`).
-    - **Goal**: Visualize the concept using geometric shapes and animations.
+    - **Goal**: Create a "3Blue1Brown" style visualization. High-fidelity, smooth, mathematical.
+    - **Style Guide**:
+      - **Background**: Dark (`background(20, 20, 30)`).
+      - **Colors**: Use neon/pastel colors (Cyan: `fill(0, 255, 255)`, Yellow: `fill(255, 255, 0)`).
+      - **Animation**: Use `frameCount` to drive smooth animations (`sin(frameCount * 0.05)`). Use `lerp()` for transitions.
+      - **3D Mode**: For 3D topics, use `createCanvas(800, 450, WEBGL)`.
+        - Use `orbitControl()` in `draw()` to allow user interaction.
+        - Draw axes manually: Red (X), Green (Y), Blue (Z).
+    - **API**: Use **P5.js Global Mode** syntax (`setup()`, `draw()`, `createCanvas()`, `beginShape()`, `vertex()`, `rotateX()`, `rotateY()`).
+    - **Example (2D Wave)**:
+      ```javascript
+      function setup() { createCanvas(800, 450); }
+      function draw() {
+        background(20, 20, 30);
+        translate(width/2, height/2);
+        noFill(); stroke(0, 255, 255); strokeWeight(2);
+        beginShape();
+        for(let i = 0; i < TWO_PI; i+=0.1) {
+          let r = 100 + 20 * sin(frameCount * 0.05 + i * 5);
+          let x = r * cos(i); let y = r * sin(i);
+          vertex(x, y);
+        }
+        endShape(CLOSE);
+        fill(255); noStroke(); textSize(20); text("Harmonic Motion", -70, 150);
+      }
+      ```
+    - **Example (3D Surface)**:
+      ```javascript
+      function setup() { createCanvas(800, 450, WEBGL); }
+      function draw() {
+        background(20, 20, 30);
+        orbitControl(); // Interactive!
+        rotateX(PI/3); rotateZ(frameCount * 0.01);
+        // Draw Axes
+        strokeWeight(2);
+        stroke(255, 50, 50); line(-200, 0, 0, 200, 0, 0); // X
+        stroke(50, 255, 50); line(0, -200, 0, 0, 200, 0); // Y
+        stroke(50, 50, 255); line(0, 0, -200, 0, 0, 200); // Z
+        
+        noFill(); stroke(0, 255, 255);
+        for(let x = -100; x < 100; x+=20) {
+          beginShape();
+          for(let y = -100; y < 100; y+=20) {
+            let z = 50 * sin((x + frameCount) * 0.05) * cos(y * 0.05);
+            vertex(x, y, z);
+          }
+          endShape();
+        }
+      }
+      ```
     - **Constraint**: Do NOT use `import` or `require`. Use standard math (`Math.sin`, etc.).
 6.  **`physics-sandbox`**: **Rapier Physics Engine (3D)**
     - Use for **Dynamics/Forces** (Gravity, Collisions, Projectiles).

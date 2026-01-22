@@ -56,11 +56,11 @@ const ManimVisualizer = ({ scriptContent }) => {
 
                 // 1. Force Parenting & Sizing via Regex
                 // Replaces: createCanvas(w, h) 
-                // With:    createCanvas(w, h).parent('manim-canvas-container').style('width', '100%').style('height', '100%')
+                // With:    createCanvas(w, h).parent('manim-canvas-container')
                 // This handles various spacing: createCanvas ( 400, 400 )
                 let modifiedScript = scriptContent.replace(
                     /createCanvas\s*\(([^)]+)\)/g,
-                    "createCanvas($1).parent('manim-canvas-container').style('width', '100%').style('height', '100%')"
+                    "createCanvas($1).parent('manim-canvas-container')"
                 );
 
                 // Fallback: If AI generated invalid p5 (e.g. no createCanvas), this won't break anything, just might not parent.
@@ -122,8 +122,24 @@ const ManimVisualizer = ({ scriptContent }) => {
             id="manim-canvas-container"
             ref={containerRef}
             className="manim-container"
-            style={{ width: '100%', height: '100%', minHeight: '400px', background: '#000', position: 'relative' }}
+            style={{
+                width: '100%',
+                height: '100%',
+                background: '#000',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+            }}
         >
+            <style>{`
+                #manim-canvas-container canvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: contain !important;
+                }
+            `}</style>
             {/* Canvas will be injected here by p5/manim */}
         </div>
     );

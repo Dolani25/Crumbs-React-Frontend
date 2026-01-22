@@ -51,13 +51,34 @@ const ManimVisualizer = ({ scriptContent }) => {
         if (isLoaded && containerRef.current) {
             console.log("Manim Environment Loaded. ScriptContent length:", scriptContent ? scriptContent.length : "N/A");
 
-            try {
-                const script = document.createElement('script');
-                script.id = 'manim-user-script';
-                script.text = `
+            if (scriptContent) {
+                console.log("ManimVisualizer: Original Script:", scriptContent);
+
+                // 1. Force Parenting & Sizing via Regex
+                // Replaces: createCanvas(w, h) OR s.createCanvas(w, h)
+                // With:    createCanvas(w, h).parent('manim-canvas-container')
+                // This ensures both Global Mode and Instance Mode (s.createCanvas) are parented correctly.
+                let modifiedScript = scriptContent.replace(
+                    /createCanvas\s*\(([^)]+)\)/g,
+                    "createCanvas($1).parent('manim-canvas-container')"
+                );
+
+                console.log("ManimVisualizer: Modified Script:", modifiedScript);
+
+                // Remove existing user script if any
+                const existingScript = document.getElementById('manim-user-script');
+                if (existingScript) existingScript.remove();
+
+                // Reset p5 instance if possible
+                if (window.remove) window.remove();
+
+                try {
+                    const script = document.createElement('script');
+                    script.id = 'manim-user-script';
+                    script.text = `
                         try {
                             // 1. Definition Phase
-                            ${scriptContent}
+                            ${modifiedScript}
                             console.log("ManimVisualizer: Script definition executed.");
 
                             // 2. Execution Phase
@@ -97,76 +118,65 @@ const ManimVisualizer = ({ scriptContent }) => {
                                 if (typeof setup === 'function') {
                                     console.log("ManimVisualizer: Found global setup(). Triggering P5...");
                                     new p5(); 
-                                    
-                                    // Apply our canvas parenting hack for Global Mode
-                                    if (window.createCanvas && !window.createCanvas.isWrapped) {
-                                        const originalCreateCanvas = window.createCanvas;
-                                         window.createCanvas = (...args) => {
-                                            const cnv = originalCreateCanvas(...args);
-                                            try { cnv.parent('manim-canvas-container'); } catch(e) {}
-                                            return cnv;
-                                        };
-                                        window.createCanvas.isWrapped = true;
-                                    }
                                 }
                             }
                         } catch (e) {
                             console.error("ManimVisualizer: Runtime Script Error:", e);
                         }
                     `;
-                document.body.appendChild(script);
-            } catch (e) {
-                console.error("ManimVisualizer: Injection Error:", e);
+                    document.body.appendChild(script);
+                } catch (e) {
+                    console.error("ManimVisualizer: Injection Error:", e);
+                }
             }
         }
-    }
     }, [isLoaded, scriptContent]);
 
-if (error) return <div style={{ color: 'red' }}>Error loading Manim Engine: {error}</div>;
-if (!isLoaded) return <div>Loading Physics Engine...</div>;
+    if (error) return <div style={{ color: 'red' }}>Error loading Manim Engine: {error}</div>;
+    if (!isLoaded) return <div>Loading Physics Engine...</div>;
 
-if (!scriptContent) {
+    if (!scriptContent) {
+        return (
+            <div style={{
+                width: '100%', height: '100%', minHeight: '400px', background: '#111',
+                color: '#666', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'monospace', textAlign: 'center', padding: '20px'
+            }}>
+                <i className="las la-code" style={{ fontSize: '3rem', marginBottom: '10px', opacity: 0.5 }}></i>
+                <p>No visualization script found.</p>
+                <p style={{ fontSize: '0.8rem', marginTop: '10px', color: '#fbbf24' }}>
+                    Click "Regenerate" to create a new animation.
+                </p>
+            </div>
+        );
+    }
+
     return (
-        <div style={{
-            width: '100%', height: '100%', minHeight: '400px', background: '#111',
-            color: '#666', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'monospace', textAlign: 'center', padding: '20px'
-        }}>
-            <i className="las la-code" style={{ fontSize: '3rem', marginBottom: '10px', opacity: 0.5 }}></i>
-            <p>No visualization script found.</p>
-            <p style={{ fontSize: '0.8rem', marginTop: '10px', color: '#fbbf24' }}>
-                Click "Regenerate" to create a new animation.
-            </p>
-        </div>
-    );
-}
-
-return (
-    <div
-        id="manim-canvas-container"
-        ref={containerRef}
-        className="manim-container"
-        style={{
-            width: '100%',
-            height: '100%',
-            background: '#000',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden'
-        }}
-    >
-        <style>{`
+        <div
+            id="manim-canvas-container"
+            ref={containerRef}
+            className="manim-container"
+            style={{
+                width: '100%',
+                height: '100%',
+                background: '#000',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+            }}
+        >
+            <style>{`
                 #manim-canvas-container canvas {
                     width: 100% !important;
                     height: 100% !important;
                     object-fit: contain !important;
                 }
             `}</style>
-        {/* Canvas will be injected here by p5/manim */}
-    </div>
-);
+            {/* Canvas will be injected here by p5/manim */}
+        </div>
+    );
 };
 
 export default ManimVisualizer;

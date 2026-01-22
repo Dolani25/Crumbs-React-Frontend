@@ -43,7 +43,6 @@ const FlowChart = ({ data, title }) => {
                 >
                     <Background color="#cbd5e1" gap={16} />
                     <Controls />
-                    <MiniMap />
                 </ReactFlow>
             </div>
         </div>

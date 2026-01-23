@@ -61,7 +61,7 @@ const ManimVisualizer = ({ scriptContent }) => {
                 let modifiedScript = scriptContent.replace(
                     /createCanvas\s*\(([^)]+)\)/g,
                     "createCanvas($1).parent('manim-canvas-container')"
-                );
+                ).replace(/`/g, '\\`'); // Escape backticks to prevent template string breakage
 
                 console.log("ManimVisualizer: Modified Script:", modifiedScript);
 
@@ -72,63 +72,73 @@ const ManimVisualizer = ({ scriptContent }) => {
                 // Reset p5 instance if possible
                 if (window.remove) window.remove();
 
+                // Create the execution logic as a separate string to ensure separation
+                const executionLogic = `
+                    console.log("ManimVisualizer: Definition executed.");
+                    
+                    try {
+                        // 2. Execution Phase
+                        if (typeof RequestGeneration === 'function') {
+                            console.log("ManimVisualizer: Found RequestGeneration class. Launching P5 Instance Mode...");
+                            
+                            if (window.currentP5) {
+                              window.currentP5.remove();
+                            }
+
+                            window.currentP5 = new p5((s) => {
+                                let scene;
+                                s.setup = () => {
+                                    console.log("P5 Instance Setup");
+                                    try {
+                                        scene = new RequestGeneration(s);
+                                    } catch(e) {
+                                        console.error("Error creating RequestGeneration:", e);
+                                    }
+                                };
+                                s.draw = () => {
+                                    if (scene && scene.show) scene.show();
+                                    else if (scene && scene.draw) scene.draw();
+                                };
+                            }, 'manim-canvas-container');
+
+                        } else {
+                            // Fallback: Global Mode
+                            console.log("ManimVisualizer: No class found. Assuming Global Mode.");
+                            if (window.remove) window.remove();
+
+                            if (typeof setup === 'function') {
+                                console.log("ManimVisualizer: Found global setup(). Triggering P5...");
+                                new p5(); 
+                            }
+                        }
+                    } catch (e) {
+                        console.error("ManimVisualizer: Runtime Execution Error:", e);
+                    }
+                `;
+
+                // Combine strict processing: User Code + Newline + Logic
+                const finalCode = modifiedScript + "\n\n" + executionLogic;
+
                 try {
+                    const blob = new Blob([finalCode], { type: 'application/javascript' });
+                    const scriptUrl = URL.createObjectURL(blob);
+
                     const script = document.createElement('script');
                     script.id = 'manim-user-script';
-                    script.text = `
-                        // 1. Definition Phase
-                        try {
-                            ${modifiedScript}
-                            console.log("ManimVisualizer: Script definition executed.");
-                        } catch (e) {
-                            console.error("ManimVisualizer: Script Definition Error:", e);
-                        }
+                    script.src = scriptUrl;
 
-                        // 2. Execution Phase
-                        try {
-                            // Check if the user defined the "RequestGeneration" class (New Standard)
-                            if (typeof RequestGeneration === 'function') {
-                                console.log("ManimVisualizer: Found RequestGeneration class. Launching P5 Instance Mode...");
-                                
-                                if (window.currentP5) {
-                                  window.currentP5.remove(); // Cleanup previous instance
-                                }
+                    script.onload = () => {
+                        console.log("ManimVisualizer: Blob Script Loaded");
+                        URL.revokeObjectURL(scriptUrl); // Cleanup memory
+                    };
 
-                                window.currentP5 = new p5((s) => {
-                                    let scene;
-                                    s.setup = () => {
-                                        console.log("P5 Instance Setup");
-                                        // Instantiate the scene
-                                        try {
-                                            scene = new RequestGeneration(s);
-                                        } catch(e) {
-                                            console.error("Error creating RequestGeneration:", e);
-                                        }
-                                    };
-                                    s.draw = () => {
-                                        if (scene && scene.show) scene.show();
-                                        else if (scene && scene.draw) scene.draw();
-                                    };
-                                }, 'manim-canvas-container');
+                    script.onerror = (e) => {
+                        console.error("ManimVisualizer: Blob Script Error", e);
+                        URL.revokeObjectURL(scriptUrl);
+                    };
 
-                            } else {
-                                // Fallback: Global Mode (Legacy/Simple Scripts)
-                                console.log("ManimVisualizer: No class found. Assuming Global Mode.");
-                                
-                                // Clean previous global p5 if any
-                                if (window.remove) window.remove();
-
-                                // Manual trigger if setup is defined globally
-                                if (typeof setup === 'function') {
-                                    console.log("ManimVisualizer: Found global setup(). Triggering P5...");
-                                    new p5(); 
-                                }
-                            }
-                        } catch (e) {
-                            console.error("ManimVisualizer: Runtime Execution Error:", e);
-                        }
-                    `;
                     document.body.appendChild(script);
+
                 } catch (e) {
                     console.error("ManimVisualizer: Injection Error:", e);
                 }

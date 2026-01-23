@@ -27,27 +27,15 @@ Topic: ${subtopicTitle}
 Remember to return ONLY valid JSON matching the schema.
 `;
 
+    // 2. Call Puter Keyless AI with JSON validation enabled
     try {
-        // 2. Call Puter Keyless AI with specific model
-        const response = await window.puter.ai.chat(fullPrompt, { model: 'gemini-2.5-flash' });
+        const response = await window.puter.ai.chat(fullPrompt, {
+            model: 'gemini-3-pro-preview', // High-reasoning model (User requested "Highest")
+            responseInfo: { mimeType: "application/json" }
+        });
 
-        // 3. Extract JSON from potential Markdown formatting
-        let cleanJson = response.message.content;
-
-        // More robust JSON cleaning: Find first '{' and last '}'
-        const jsonStartIndex = cleanJson.indexOf('{');
-        const jsonEndIndex = cleanJson.lastIndexOf('}');
-
-        if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-            cleanJson = cleanJson.substring(jsonStartIndex, jsonEndIndex + 1);
-        } else {
-            // Fallback: simple markdown strip
-            cleanJson = cleanJson.replace(/```json/g, "").replace(/```/g, "").trim();
-        }
-
-        // Remove conversational text if any remains before/after
-        // (The substring usually handles it, but just in case)
-
+        // 3. Raw Response (Should be valid JSON now)
+        const cleanJson = response.message.content;
         const parsedData = JSON.parse(cleanJson);
 
         // 4. Validate with Zod
@@ -95,8 +83,6 @@ Remember to return ONLY valid JSON matching the schema.
                     keyword = keyword.replace(/_/g, ' ').replace(/[0-9]/g, '').trim();
 
                     // Search for real image
-                    // Strategy: Search for "keyword diagram" first for scientific accuracy
-                    // Fix: Add context to avoid generic keywords triggering irrelevant results
                     const contextSuffix = " scientific diagram";
                     const searchTerm = `${keyword}${contextSuffix}`;
                     console.log(`🔍 Searching Wikimedia for: ${searchTerm}`);
@@ -104,7 +90,6 @@ Remember to return ONLY valid JSON matching the schema.
                     let realImageUrl = await searchWikimedia(searchTerm);
 
                     if (!realImageUrl) {
-                        // Retry with "structure" or "engineering"
                         console.log(`⚠️ Retry: Searching for "${keyword} structure"`);
                         realImageUrl = await searchWikimedia(`${keyword} structure`);
                     }
@@ -115,8 +100,6 @@ Remember to return ONLY valid JSON matching the schema.
                             media: { ...crumb.media, image: realImageUrl }
                         };
                     } else {
-                        // Fallback 2: Try searching for "scientific illustration"
-                        // ... or just keep placeholder? Let's try one broad search.
                         const fallbackUrl = await searchWikimedia(keyword + " science");
                         if (fallbackUrl) {
                             return {
@@ -126,13 +109,12 @@ Remember to return ONLY valid JSON matching the schema.
                         }
                     }
 
-                    // If all fails, remove the image media entirely to avoid confusion
+                    // If all fails, remove the image media entirely check
                     const { media, ...rest } = crumb;
                     return rest;
 
                 } catch (imgErr) {
                     console.error("Image retrieval failed:", imgErr);
-                    // On error, also return without media
                     const { media, ...rest } = crumb;
                     return rest;
                 }
@@ -146,8 +128,6 @@ Remember to return ONLY valid JSON matching the schema.
 
     } catch (error) {
         console.error("❌ AI Generation/Validation Failed:", error);
-
-        // Return a fallback or rethrow
         throw new Error("Failed to generate valid lesson content. " + error.message);
     }
 };
@@ -188,8 +168,11 @@ Generate a specific interaction that makes "${failedConcept}" click.
 `;
 
     try {
-        const response = await window.puter.ai.chat(remedialPrompt, { model: 'gemini-2.5-flash' });
-        let cleanJson = response.message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+        const response = await window.puter.ai.chat(remedialPrompt, {
+            model: 'gemini-3-pro-preview',
+            responseInfo: { mimeType: "application/json" }
+        });
+        const cleanJson = response.message.content;
         const crumb = JSON.parse(cleanJson);
         // Minimal validation - check if tool exists
         if (!crumb.tool) throw new Error("AI failed to generate a tool.");

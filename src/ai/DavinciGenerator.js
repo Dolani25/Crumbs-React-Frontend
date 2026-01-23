@@ -30,7 +30,7 @@ Remember to return ONLY valid JSON matching the schema.
     // 2. Call Puter Keyless AI with JSON validation enabled
     try {
         const response = await window.puter.ai.chat(fullPrompt, {
-            model: 'gemini-2.5-pro', // High-reasoning model (User requested "Highest")
+            model: 'gemini-2.5-flash', // High-reasoning model (User requested "Highest")
             responseInfo: { mimeType: "application/json" }
         });
 
@@ -169,7 +169,7 @@ Generate a specific interaction that makes "${failedConcept}" click.
 
     try {
         const response = await window.puter.ai.chat(remedialPrompt, {
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-flash',
             responseInfo: { mimeType: "application/json" }
         });
         const cleanJson = response.message.content;

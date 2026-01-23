@@ -100,6 +100,62 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// @route   POST api/auth/google
+// @desc    Authenticate with Google
+// @access  Public
+router.post('/google', async (req, res) => {
+    const { token } = req.body;
+    const { OAuth2Client } = require('google-auth-library');
+    // Using the same Client ID for verification
+    const client = new OAuth2Client("541014598474-sa1cc0v0alu4br0afvq7h9h3of71j399.apps.googleusercontent.com");
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: "541014598474-sa1cc0v0alu4br0afvq7h9h3of71j399.apps.googleusercontent.com",
+        });
+        const { name, email, picture } = ticket.getPayload();
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create new user
+            // Generate a random password since they use Google
+            const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+            user = new User({
+                username: name,
+                email,
+                passwordHash: password, // Will hash below
+                avatar: picture // If schema supports it
+            });
+
+            const salt = await bcrypt.genSalt(10);
+            user.passwordHash = await bcrypt.hash(password, salt);
+            await user.save();
+        }
+
+        const payload = {
+            user: {
+                id: user.id
+            }
+        };
+
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET || 'secret_crumbs_key_dev',
+            { expiresIn: '7d' },
+            (err, token) => {
+                if (err) throw err;
+                res.json({ token });
+            }
+        );
+    } catch (err) {
+        console.error("Google Auth Error:", err.message);
+        res.status(400).send('Invalid Google Token');
+    }
+});
+
 // @route   GET api/auth/me
 // @desc    Get current user
 // @access  Private
@@ -115,7 +171,6 @@ router.get('/me', auth, async (req, res) => {
 
         // Append connection status for frontend UI
         const userData = user.toObject();
-        userData.connectionMode = global.connectionMode;
 
         res.json(userData);
     } catch (err) {

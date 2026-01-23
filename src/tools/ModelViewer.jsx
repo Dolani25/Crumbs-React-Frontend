@@ -10,12 +10,6 @@ import {
     Text,
     Billboard
 } from "@react-three/drei";
-
-// ... (existing imports)
-
-// ... inside DynamicShape ...
-// LABEL Handling
-// ... inside DynamicShape ...
 import * as THREE from "three";
 
 // --- PROCEDURAL COMPONENTS ---
@@ -285,27 +279,176 @@ const ExternalModel = ({ url }) => {
     )
 };
 
-const EngineeringScene = ({ type, data }) => {
+// --- HIGH FIDELITY PRESETS ---
+const ProceduralAtom = () => {
     return (
         <group>
-            <ambientLight intensity={0.8} />
-            <hemisphereLight intensity={0.5} groundColor="#444" />
-            <directionalLight position={[10, 10, 5]} intensity={2} castShadow />
-            <pointLight position={[-10, -10, -10]} color="blue" intensity={1} />
+            {/* Nucleus */}
+            <Float floatIntensity={2} speed={3}>
+                <mesh>
+                    <sphereGeometry args={[0.8, 32, 32]} />
+                    <meshStandardMaterial color="#ef4444" emissive="#7f1d1d" emissiveIntensity={0.5} />
+                </mesh>
+                <mesh position={[0.5, 0.5, 0]}>
+                    <sphereGeometry args={[0.6, 32, 32]} />
+                    <meshStandardMaterial color="#3b82f6" emissive="#1e3a8a" emissiveIntensity={0.5} />
+                </mesh>
+            </Float>
+            {/* Electrons */}
+            {[0, 1, 2].map((i) => (
+                <group key={i} rotation={[Math.random() * Math.PI, Math.random() * Math.PI, 0]}>
+                    <mesh>
+                        <torusGeometry args={[3 + i * 0.5, 0.05, 16, 100]} />
+                        <meshStandardMaterial color="#cbd5e1" opacity={0.3} transparent />
+                    </mesh>
+                    <mesh position={[3 + i * 0.5, 0, 0]}>
+                        <sphereGeometry args={[0.2, 16, 16]} />
+                        <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={2} toneMapped={false} />
+                    </mesh>
+                </group>
+            ))}
+        </group>
+    );
+};
+
+const ProceduralDNA = () => {
+    const count = 20;
+    return (
+        <group position={[0, -4, 0]}>
+            {Array.from({ length: count }).map((_, i) => {
+                const y = i * 0.4;
+                const rotation = i * 0.5;
+                return (
+                    <group key={i} position={[0, y, 0]} rotation={[0, rotation, 0]}>
+                        {/* Backbone 1 */}
+                        <mesh position={[1, 0, 0]}>
+                            <sphereGeometry args={[0.15, 16, 16]} />
+                            <meshStandardMaterial color="#e11d48" />
+                        </mesh>
+                        {/* Backbone 2 */}
+                        <mesh position={[-1, 0, 0]}>
+                            <sphereGeometry args={[0.15, 16, 16]} />
+                            <meshStandardMaterial color="#3b82f6" />
+                        </mesh>
+                        {/* Rungs */}
+                        <mesh rotation={[0, 0, Math.PI / 2]}>
+                            <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
+                            <meshStandardMaterial color="#fff" />
+                        </mesh>
+                    </group>
+                );
+            })}
+        </group>
+    );
+};
+
+const ProceduralEngine = () => {
+    const pistonRef = useRef();
+    useFrame((state) => {
+        if (pistonRef.current) {
+            pistonRef.current.position.y = Math.sin(state.clock.elapsedTime * 10) * 0.5;
+        }
+    });
+    return (
+        <group>
+            {/* Block */}
+            <mesh position={[0, -0.5, 0]}>
+                <boxGeometry args={[2, 2.5, 2]} />
+                <meshPhysicalMaterial color="#64748b" metalness={0.9} roughness={0.2} clearcoat={1} />
+            </mesh>
+            {/* Cylinder Hole Visual (Top) */}
+            <mesh position={[0, 0.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.8, 32]} />
+                <meshStandardMaterial color="#111" />
+            </mesh>
+            {/* Piston */}
+            <group ref={pistonRef} position={[0, 0, 0]}>
+                <mesh position={[0, 1.2, 0]}>
+                    <cylinderGeometry args={[0.75, 0.75, 1, 32]} />
+                    <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
+                </mesh>
+                <mesh position={[0, 0, 0]}>
+                    <cylinderGeometry args={[0.1, 0.1, 2, 16]} />
+                    <meshStandardMaterial color="#94a3b8" />
+                </mesh>
+            </group>
+        </group>
+    );
+};
+
+const ProceduralSolarSystem = () => {
+    const planets = [
+        { r: 0.4, dist: 2, speed: 2, color: "#9ca3af" }, // Mercury
+        { r: 0.6, dist: 3, speed: 1.5, color: "#fbbf24" }, // Venus
+        { r: 0.7, dist: 4.5, speed: 1, color: "#3b82f6" }, // Earth
+        { r: 0.5, dist: 6, speed: 0.8, color: "#ef4444" }, // Mars
+        { r: 1.2, dist: 8.5, speed: 0.4, color: "#d97706" }, // Jupiter
+    ];
+
+    return (
+        <group>
+            {/* Sun */}
+            <mesh>
+                <sphereGeometry args={[1.5, 32, 32]} />
+                <meshStandardMaterial color="#fcd34d" emissive="#f59e0b" emissiveIntensity={2} toneMapped={false} />
+            </mesh>
+            <pointLight intensity={2} color="#fcd34d" distance={20} decay={2} />
+
+            {planets.map((p, i) => (
+                <Planet key={i} {...p} />
+            ))}
+        </group>
+    );
+};
+
+const Planet = ({ r, dist, speed, color }) => {
+    const ref = useRef();
+    useFrame((state) => {
+        if (ref.current) {
+            const t = state.clock.elapsedTime * speed * 0.5;
+            ref.current.position.x = Math.cos(t) * dist;
+            ref.current.position.z = Math.sin(t) * dist;
+        }
+    });
+    return (
+        <mesh ref={ref}>
+            <sphereGeometry args={[r, 32, 32]} />
+            <meshStandardMaterial color={color} />
+        </mesh>
+    );
+};
+
+
+const EngineeringScene = ({ type, data }) => {
+    // Determine Preset
+    const preset = data?.preset || (typeof data === 'string' ? data : null);
+
+    return (
+        <group>
+            <ambientLight intensity={0.5} />
+            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+            <Environment preset="city" />
 
             <group position={[0, 0, 0]}>
-                {/* MODE A: DYNMAIC LEGO */}
-                {data?.shapes && <DynamicModel shapes={data.shapes} />}
+                {/* PRESETS */}
+                {preset === 'ATOM' && <ProceduralAtom />}
+                {preset === 'DNA' && <ProceduralDNA />}
+                {preset === 'ENGINE' && <ProceduralEngine />}
+                {preset === 'SOLAR_SYSTEM' && <ProceduralSolarSystem />}
+
+                {/* DYNAMIC SHAPES (Fallback to LEGO mode) */}
+                {!preset && data?.shapes && <DynamicModel shapes={data.shapes} />}
 
                 {/* MODE B: EXTERNAL URL */}
                 {data?.url && <ExternalModel url={data.url} />}
 
-                {/* MODE C: LEGACY FALLBACKS */}
-                {!data?.shapes && !data?.url && type === 'DRILL' && <ProceduralDrill params={data} />}
-                {!data?.shapes && !data?.url && type === 'PUMP' && <ProceduralPump />}
-                {!data?.shapes && !data?.url && (type === 'ROCK' || !type) && <ProceduralRock type={data?.topic || 'rock'} />}
+                {/* LEGACY FALLBACKS */}
+                {!preset && !data?.shapes && type === 'DRILL' && <ProceduralDrill params={data} />}
+                {!preset && !data?.shapes && type === 'PUMP' && <ProceduralPump />}
+                {!preset && !data?.shapes && (type === 'ROCK' || !type) && <ProceduralRock type={data?.topic || 'rock'} />}
             </group>
-            <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={10} blur={2.5} far={4} />
+
+            <ContactShadows position={[0, -2.5, 0]} opacity={0.6} scale={20} blur={2} far={4} />
         </group>
     );
 };

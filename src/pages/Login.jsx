@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api';
+import { GoogleLogin } from '@react-oauth/google';
+import { login, googleLogin } from '../api';
 import './Auth.css';
 
 const Login = ({ setAuth }) => {
@@ -65,6 +66,26 @@ const Login = ({ setAuth }) => {
                 </form>
                 <div className="auth-footer">
                     Don't have an account? <span onClick={() => navigate('/signup')}>Sign Up</span>
+                </div>
+
+                <div className="google-auth-section" style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <p style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>Or sign in with</p>
+                    <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                            try {
+                                await googleLogin(credentialResponse.credential);
+                                setAuth(true);
+                                navigate('/dashboard');
+                            } catch (err) {
+                                console.error("Google Login Failed", err);
+                                setError("Google Login Failed");
+                            }
+                        }}
+                        onError={() => {
+                            console.log('Login Failed');
+                            setError("Google Login Failed");
+                        }}
+                    />
                 </div>
             </div>
         </div>

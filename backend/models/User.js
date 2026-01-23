@@ -38,6 +38,16 @@ const userSchema = new mongoose.Schema({
         date: Date, // ISO timestamp for the scheduled reading time
         courseId: String, // Optional link to course
         isCompleted: { type: Boolean, default: false }
+    }],
+    // Library / Uploads
+    library: [{
+        filename: String,
+        storedName: String,
+        path: String,
+        mimetype: String,
+        size: Number,
+        uploadedAt: { type: Date, default: Date.now },
+        isActive: { type: Boolean, default: true } // Toggle for RAG
     }]
 }, {
     timestamps: true

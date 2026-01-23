@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 // Note: In a real app we'd fix the default icon issue with Leaflet in React
@@ -30,7 +30,6 @@ const romeData = {
     }
 };
 
-// --- Demo Data: Oil & Gas Regions ---
 const oilGasData = {
     "1900": {
         color: '#f59e0b',
@@ -84,14 +83,28 @@ const HistoricalMap = ({ data }) => {
     if (years.length === 0) return <div style={{ padding: '20px', color: 'white' }}>Map data unavailable</div>;
 
     // State
-    const [currentYear, setCurrentYear] = useState(initialYear);
+    const [sliderValue, setSliderValue] = useState(initialYear); // Immediate visual feedback
+    const [mapYear, setMapYear] = useState(initialYear); // Debounced map update
     const [mapData, setMapData] = useState(sourceData[String(initialYear)] || sourceData[Object.keys(sourceData)[0]]);
 
-    // Calculate dynamic center if possible
+    // Debounce Effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            // Find closest year
+            const val = sliderValue;
+            const closest = years.reduce((prev, curr) => {
+                return (Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev);
+            });
+            setMapYear(closest);
+            setMapData(sourceData[String(closest)]);
+        }, 100); // 100ms debounce for smoothness
+
+        return () => clearTimeout(timer);
+    }, [sliderValue, years, sourceData]);
+
     const getInitialCenter = () => {
         try {
             if (!mapData) return [41.90, 12.50];
-            // Look at the first year's first border polygon
             if (mapData.borders && mapData.borders.length > 0) {
                 const polygon = mapData.borders[0];
                 if (polygon && polygon.length > 0) {
@@ -108,12 +121,7 @@ const HistoricalMap = ({ data }) => {
     if (!mapData) return <div className="error-message">Error loading map data</div>;
 
     const handleSliderChange = (e) => {
-        const val = parseInt(e.target.value);
-        const closest = years.reduce((prev, curr) => {
-            return (Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev);
-        });
-        setCurrentYear(closest);
-        setMapData(sourceData[String(closest)]);
+        setSliderValue(parseInt(e.target.value));
     };
 
     return (
@@ -131,7 +139,7 @@ const HistoricalMap = ({ data }) => {
 
                 {mapData.borders && mapData.borders.map((coords, i) => (
                     <Polygon
-                        key={i}
+                        key={`${mapYear}-${i}`} // Key change acts as animation trigger if supported
                         positions={coords}
                         pathOptions={{
                             color: mapData.color || '#3b82f6',
@@ -153,28 +161,75 @@ const HistoricalMap = ({ data }) => {
                 left: 0,
                 right: 0,
                 background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)',
-                padding: '20px',
+                padding: '20px 30px',
                 zIndex: 1000,
                 color: 'white',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
             }}>
-                <h2 style={{ margin: '0 0 10px 0', fontFamily: 'serif', fontSize: '2rem' }}>
-                    {currentYear}
+                <h2 style={{ margin: '0 0 5px 0', fontFamily: 'serif', fontSize: '2.5rem', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+                    {mapYear}
+                    {/* Interpolation visual hint? optional */}
                 </h2>
-                <p style={{ margin: '0 0 15px 0', opacity: 0.8 }}>{mapData.description}</p>
+                <p style={{ margin: '0 0 20px 0', opacity: 0.9, textAlign: 'center', maxWidth: '80%' }}>{mapData.description}</p>
 
-                <input
-                    type="range"
-                    min={years[0]}
-                    max={years[years.length - 1]}
-                    step="1"
-                    value={currentYear}
-                    onChange={handleSliderChange}
-                    style={{ width: '80%', cursor: 'pointer' }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '80%', fontSize: '0.8rem', opacity: 0.5, marginTop: '5px' }}>
+                {/* Custom Slider */}
+                <div style={{ width: '90%', position: 'relative', height: '40px', display: 'flex', alignItems: 'center' }}>
+                    {/* Track Line */}
+                    <div style={{ position: 'absolute', left: 0, right: 0, height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }}></div>
+
+                    {/* Visual Ticks for Years */}
+                    {years.map(y => {
+                        // Calculate position %
+                        const range = years[years.length - 1] - years[0];
+                        const percent = ((y - years[0]) / range) * 100;
+                        return (
+                            <div key={y} style={{
+                                position: 'absolute',
+                                left: `${percent}%`,
+                                width: '2px',
+                                height: '10px',
+                                background: y === mapYear ? '#a855f7' : 'rgba(255,255,255,0.3)',
+                                transform: 'translateX(-50%)',
+                                transition: 'background 0.3s'
+                            }}></div>
+                        );
+                    })}
+
+                    <input
+                        type="range"
+                        min={years[0]}
+                        max={years[years.length - 1]}
+                        step="1" // Fine step for fluid dragging
+                        value={sliderValue}
+                        onChange={handleSliderChange}
+                        style={{
+                            width: '100%',
+                            cursor: 'pointer',
+                            zIndex: 2,
+                            opacity: 0, // Invisible functional slider on top
+                            height: '100%',
+                            position: 'absolute'
+                        }}
+                    />
+
+                    {/* Custom Thumb (Visual) */}
+                    <div style={{
+                        position: 'absolute',
+                        left: `${((sliderValue - years[0]) / (years[years.length - 1] - years[0])) * 100}%`,
+                        width: '20px',
+                        height: '20px',
+                        background: '#a855f7',
+                        borderRadius: '50%',
+                        boxShadow: '0 0 10px #a855f7',
+                        transform: 'translateX(-50%)',
+                        pointerEvents: 'none',
+                        transition: 'left 0.1s linear' // Smooth visual movement
+                    }}></div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '90%', fontSize: '0.8rem', opacity: 0.5, marginTop: '10px' }}>
                     <span>{years[0]}</span>
                     <span>{years[years.length - 1]}</span>
                 </div>

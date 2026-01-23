@@ -28,6 +28,7 @@
     margin: 0;
     background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -1px;
 }
@@ -269,4 +270,35 @@
     color: #ef4444;
     opacity: 1;
     transform: rotate(90deg);
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .planner-page {
+        padding: 80px 20px 40px 20px;
+    }
+
+    .planner-content {
+        flex-direction: column;
+    }
+
+    .planner-form {
+        max-width: 100%;
+        position: static;
+        /* Remove sticky on mobile */
+    }
+
+    .planner-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .planner-header h1 {
+        font-size: 2rem;
+    }
+
+    .planner-list {
+        width: 100%;
+    }
 }

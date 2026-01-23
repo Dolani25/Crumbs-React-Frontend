@@ -12,7 +12,14 @@ import Activity from './pages/Activity.jsx';
 import Bookmarks from './pages/Bookmarks.jsx';
 import Profile from './pages/Profile.jsx';
 import Community from './pages/Community.jsx';
+import Library from './pages/Library.jsx';
+import Chat from './pages/Chat.jsx';
+import Feed from './pages/Feed.jsx';
+import QuizDashboard from './pages/QuizDashboard.jsx';
 import Planner from './pages/Planner.jsx';
+import Pinned from './pages/Pinned.jsx';
+import About from './pages/About.jsx';
+import Settings from './pages/Settings.jsx';
 import NotFound from './pages/NotFound.jsx';
 import { dummyCourses } from './dummyCourses.js';
 import { loadUser, syncCourses, updateXP, deleteCourse } from './api.js';
@@ -470,7 +477,14 @@ function App() {
         <Route path="/profile" element={user ? <Profile user={user} /> : <Navigate to="/login" />} />
         <Route path="/planner" element={user ? <Planner /> : <Navigate to="/login" />} />
         <Route path="/activity" element={user ? <Activity /> : <Navigate to="/login" />} />
+        <Route path="/library" element={user ? <Library /> : <Navigate to="/login" />} />
+        <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
+        <Route path="/quiz" element={user ? <QuizDashboard /> : <Navigate to="/login" />} />
+        <Route path="/feed" element={user ? <Feed /> : <Navigate to="/login" />} />
         <Route path="/bookmarks" element={user ? <Bookmarks /> : <Navigate to="/login" />} />
+        <Route path="/pinned" element={user ? <Pinned /> : <Navigate to="/login" />} />
+        <Route path="/about" element={user ? <About /> : <Navigate to="/login" />} />
+        <Route path="/settings" element={user ? <Settings user={user} toggleTheme={toggleTheme} currentTheme={theme} /> : <Navigate to="/login" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

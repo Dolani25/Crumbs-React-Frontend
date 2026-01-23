@@ -25,7 +25,8 @@ const connectDB = async () => {
             console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
         } catch (err) {
             console.error(`❌ Remote DB Connection Failed: ${err.message}`);
-            // Explicitly do NOT fallback to mock mode.
+            console.error(`❌ Remote DB Connection Failed: ${err.message}`);
+
         }
     } else {
         console.error("❌ No MONGO_URI found. Server requires Database.");
@@ -43,12 +44,14 @@ const courseRoutes = require('./routes/courses');
 // API Routes (Must be before static files)
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/library', require('./routes/library'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health Check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        mode: global.connectionMode || 'mock',
         dbState: mongoose.connection.readyState
     });
 });

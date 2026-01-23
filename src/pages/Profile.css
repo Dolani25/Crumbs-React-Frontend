@@ -159,3 +159,33 @@
         transform: translateY(0);
     }
 }
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 80px 15px 40px 15px;
+        /* More top padding to clear nav if needed, less side padding */
+        display: block;
+        /* Remove flex centering to verify layout */
+        height: auto;
+        min-height: auto;
+    }
+
+    .profile-card {
+        margin: 0 auto;
+        border-radius: 16px;
+    }
+
+    .profile-stats-row {
+        gap: 15px;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .profile-back-btn {
+        top: 10px;
+        left: 10px;
+    }
+}

@@ -62,6 +62,14 @@ export const signup = async (username, email, password) => {
     return res.data;
 };
 
+export const googleLogin = async (idToken) => {
+    const res = await api.post('/auth/google', { token: idToken });
+    if (res.data.token) {
+        localStorage.setItem('crumbs_token', res.data.token);
+    }
+    return res.data;
+};
+
 export const loadUser = async () => {
     try {
         const res = await api.get('/auth/me');

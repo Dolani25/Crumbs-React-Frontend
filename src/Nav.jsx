@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './Nav.css'
 import Default from './assets/profilePic.jpg'
 import Cog from './assets/cog.svg'
@@ -17,11 +18,6 @@ import Close from './assets/close.svg'
 
 const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) => {
   const [isAiConnected, setIsAiConnected] = useState(false);
-  const [serverMode, setServerMode] = useState(user?.connectionMode || 'mock');
-
-  useEffect(() => {
-    setServerMode(user?.connectionMode || 'mock');
-  }, [user]);
 
   useEffect(() => {
     // Check initial state
@@ -29,37 +25,18 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
       setIsAiConnected(true);
     }
 
-    // Polling for auth changes & Server Health
+    // Polling for auth changes
     const interval = setInterval(async () => {
       // 1. Puter Auth
       if (window.puter && window.puter.auth) {
         setIsAiConnected(window.puter.auth.isSignedIn());
       }
-
-      // 2. Server Connection Health
-      try {
-        // Only poll if running locally/dev or if needed. 
-        // Using relative path handles both generic fetch
-        const res = await fetch('/api/health'); // This assumes proxy is set up or relative path works
-        if (res.ok) {
-          const data = await res.json();
-          setServerMode(data.mode);
-        } else {
-          setServerMode('mock'); // Server unreachable
-        }
-      } catch (e) {
-        setServerMode('mock');
-      }
-
     }, 5000); // Check every 5s
 
     return () => clearInterval(interval);
   }, []);
 
-  const handlePlaceholder = (e, name) => {
-    e.preventDefault();
-    alert(`The "${name}" feature is coming soon!`);
-  }
+
 
   return (
     <nav id="nav" className={isVisible ? 'show' : 'hide'}>
@@ -85,8 +62,11 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
         </span>
 
         {/* COG SVG */}
+        {/* COG SVG (Settings) */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <img style={{ marginTop: '-1em', cursor: 'pointer' }} src={Cog} alt="Settings" onClick={(e) => handlePlaceholder(e, 'Settings')} />
+          <Link to="/settings" style={{ border: 'none', background: 'none' }}>
+            <img style={{ marginTop: '-1em', cursor: 'pointer' }} src={Cog} alt="Settings" />
+          </Link>
         </div>
       </span>
 
@@ -135,43 +115,43 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
 
         <ul className="Btnlist">
           <li className="item" id="community">
-            <a href="/profile" className="btn"><img src={Profile} />
+            <Link to="/profile" className="btn"><img src={Profile} />
               Profile
-            </a>
+            </Link>
           </li>
           <li className="item" id="earn">
-            <a href="#" onClick={(e) => handlePlaceholder(e, 'Activity')} className="btn"><img src={Activity} />
+            <Link to="/activity" className="btn"><img src={Activity} />
               Activity
-            </a>
+            </Link>
           </li>
 
           <li className="item" id="wallet">
-            <a href="#" onClick={(e) => handlePlaceholder(e, 'Bookmarks')} className="btn"><img src={Bookmark} />
+            <Link to="/bookmarks" className="btn"><img src={Bookmark} />
               Bookmarks
-            </a>
+            </Link>
           </li>
 
           <li className="item" id="trans">
-            <a href="#" onClick={(e) => handlePlaceholder(e, 'Pinned')} className="btn"><img src={Pinned} />
+            <Link to="/pinned" className="btn"><img src={Pinned} />
               Pinned
-            </a>
+            </Link>
           </li>
 
           <li className="item" id="community">
-            <a href="/community" className="btn"><img src={Near} />
+            <Link to="/community" className="btn"><img src={Near} />
               Community
-            </a>
+            </Link>
           </li>
 
           <li className="item" id="message">
-            <a href="/planner" className="btn"><img src={Planner} />
+            <Link to="/planner" className="btn"><img src={Planner} />
               Planner
-            </a>
+            </Link>
           </li>
           <li className="item" id="about">
-            <a href="#" onClick={(e) => handlePlaceholder(e, 'About')} className="btn"><img src={About} />
+            <Link to="/about" className="btn"><img src={About} />
               About
-            </a>
+            </Link>
           </li>
           <li className="item" id="ai-connect">
             {isAiConnected ? (
@@ -201,12 +181,7 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
       </ul>
 
       {/* Status Bar */}
-      <div className="status-indicator">
-        <div className={`status-dot ${['remote', 'local'].includes(serverMode) ? 'online' : 'offline'}`}></div>
-        <span className="status-text">
-          {['remote', 'local'].includes(serverMode) ? '✅ Online (Synced)' : '⚠️ Offline (Local)'}
-        </span>
-      </div>
+
     </nav>
   );
 };

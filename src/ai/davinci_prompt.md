@@ -153,6 +153,7 @@ You have access to the following tools. Attach them in the `tool` property of th
       }
       ```
     - **CRITICAL**: Use real latitude/longitude coordinates. Keep polygons simple (4-10 points) to save tokens.
+    - **DENSITY**: You MUST provide at least **5-8** time steps (keys) to make the map useful. Avoid providing only 2-3 steps. "Time travel" needs data points!
 9.  **`volume-viewer`**: **The "X-Ray" Engine (VTK.js)**
     - Use for **Volumetric Data** (Petroleum Geology, Medical Imaging, Structural Geology).
     - It renders a 3D block (reservoir/tissue) that the student can see *inside*.

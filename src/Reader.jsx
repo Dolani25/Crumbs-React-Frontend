@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import "./Reader.css";
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
@@ -14,7 +15,7 @@ import HistoricalMap from './visualizations/HistoricalMap';
 import ErrorBoundary from './components/ErrorBoundary';
 import QuizView from './tools/QuizView.jsx';
 import ModelViewer from './tools/ModelViewer.jsx';
-import VideoExplainer from './tools/Remotion/VideoExplainer'; // Remotion Video Tool
+
 import VolumeViewer from './tools/VolumeViewer'; // VTK.js Volume Tool
 import FlowChart from './tools/FlowChart'; // React Flow Process Tool
 
@@ -31,6 +32,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
   const [isRemediating, setIsRemediating] = useState(false);
+  const [postModal, setPostModal] = useState({ show: false, context: null });
+  const [postContent, setPostContent] = useState('');
 
   // Scroll Progress with Throttle
   useEffect(() => {
@@ -160,6 +163,52 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
       alert(`💡 Explain: ${text}\n\n${explanation}`);
     } catch (err) {
       console.error("Explain failed", err);
+    }
+  };
+
+  const handleDiscuss = () => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const text = selection.toString().trim();
+    if (!text) return;
+
+    setPostModal({
+      show: true,
+      context: {
+        lineContent: text,
+        courseId: courseId,
+        courseTitle: lesson.title,
+        crumbId: lesson.topic // using topic as id roughly
+      }
+    });
+    // Hide tooltip
+    setTooltipStyle({ display: "none" });
+  };
+
+  const handlePostSubmit = async () => {
+    if (!postContent.trim()) return;
+    try {
+      const token = localStorage.getItem('crumbs_token');
+      // Using fetch
+      await fetch('http://localhost:5000/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        },
+        body: JSON.stringify({
+          content: postContent,
+          type: 'question', // Default to question/discussion from reader
+          context: postModal.context
+        })
+      });
+
+      alert("Posted to Feed! 🌍");
+      setPostModal({ show: false, context: null });
+      setPostContent('');
+    } catch (err) {
+      console.error("Failed to post discussion", err);
+      alert("Failed to post.");
     }
   };
 
@@ -322,7 +371,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
             cursor: 'pointer'
           }}
         >
-          Try Baking Again 🔄
+          Try Baking Again <RefreshCw size={16} style={{ marginLeft: '10px' }} />
         </button>
       </div>
     )
@@ -426,6 +475,18 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           <i className="las la-brain" style={{ fontSize: '1.2rem', color: '#8b5cf6' }}></i>
           Explain
         </button>
+        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.2)' }}></div>
+        <button
+          onClick={handleDiscuss}
+          style={{
+            border: 'none', background: 'transparent', cursor: 'pointer',
+            color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px',
+            fontSize: '0.9rem', fontWeight: 'bold'
+          }}
+        >
+          <i className="las la-comment-alt" style={{ fontSize: '1.2rem', color: '#6366f1' }}></i>
+          Discuss
+        </button>
       </div>
 
       {/* Lightbox Overlay */}
@@ -457,6 +518,57 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
             style={{ maxWidth: '95%', maxHeight: '85%', borderRadius: '8px', boxShadow: '0 0 30px rgba(0,0,0,0.5)' }}
             onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
           />
+        </div>
+      )}
+
+      {/* Discussion Modal */}
+      {postModal.show && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.8)', zIndex: 10000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+          onClick={() => setPostModal({ show: false, context: null })}
+        >
+          <div
+            style={{
+              background: '#1e293b', padding: '25px', borderRadius: '16px', width: '90%', maxWidth: '500px',
+              border: '1px solid #334155', boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 15px 0', color: 'white' }}>Start Discussion</h3>
+
+            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '15px', borderLeft: '3px solid #6366f1' }}>
+              <p style={{ margin: 0, color: '#cbd5e1', fontStyle: 'italic', fontSize: '0.9rem' }}>"{postModal.context.lineContent}"</p>
+            </div>
+
+            <textarea
+              value={postContent}
+              onChange={e => setPostContent(e.target.value)}
+              placeholder="Ask a question or share a thought about this..."
+              style={{
+                width: '100%', height: '100px', background: '#0f172a', border: '1px solid #334155',
+                borderRadius: '8px', color: 'white', padding: '10px', marginBottom: '15px', resize: 'none'
+              }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setPostModal({ show: false, context: null })}
+                style={{ background: 'transparent', border: '1px solid #475569', color: '#cbd5e1', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePostSubmit}
+                style={{ background: '#6366f1', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Post to Feed
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -598,11 +710,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
               </div>
             )}
 
-            {(currentCrumb.tool?.type === 'video-explainer') && (
-              <div style={{ marginTop: '40px' }}>
-                <VideoExplainer data={currentCrumb.tool.data} />
-              </div>
-            )}
+
 
             {(currentCrumb.tool?.type === 'volume-viewer') && (
               <div style={{ marginTop: '40px' }}>

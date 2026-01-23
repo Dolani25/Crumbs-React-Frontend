@@ -1,4 +1,5 @@
 import './Footer.css'
+import { Link } from 'react-router-dom';
 import Course from './assets/applebook.svg'
 import Library from './assets/library.svg'
 import Feed from './assets/feed.svg'
@@ -9,11 +10,11 @@ function Footer() {
   return (
     <footer>
       <button><a href="/" ><img src={Course} /><span>Courses</span></a></button>
-      <button onClick={() => alert("Library clicked")}><img src={Library} /><span>Library</span></button>
-      <button><a href="#" onClick={(e) => e.preventDefault()} ><img src={Feed} /><span>Feed</span></a></button>
-      <button onClick={() => alert("Chat clicked")}><img src={Chat} /><span>Chat</span></button>
+      <button><Link to="/library"><img src={Library} /><span>Library</span></Link></button>
+      <button><Link to="/feed"><img src={Feed} /><span>Feed</span></Link></button>
+      <button><Link to="/chat"><img src={Chat} /><span>Chat</span></Link></button>
 
-      <button onClick={() => alert("Quiz clicked")}><img src={Quiz} /><span>Quiz</span></button>
+      <button><Link to="/quiz"><img src={Quiz} /><span>Quiz</span></Link></button>
 
       {/* Dev Tool: Reset Data */}
       <button onClick={() => {

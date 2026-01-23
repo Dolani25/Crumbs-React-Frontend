@@ -58,7 +58,11 @@ You must respond with valid JSON **ONLY**. No markdown formatting outside the st
     - Use `code` field ONLY for programming code (Python, JS, C++). Do NOT use it for math notes.
 6.  **Image Sources**: For any `image` URL, you **MUST** use the following format: `https://picsum.photos/seed/{keyword}/600/400`. Replace `{keyword}` with a concise, relevant term for the image (e.g., `atom`, `react`, `history`). NEVER invent other URLs.
 7.  **Typography**: Use `<b>` tags for emphasis within the text strings. Use `<h3>` tags at the start of a crumb if a new section begins.
-8.  **Inline Math**: Any math symbols or variables inside the `text` field **MUST** be wrapped in single dollar signs (e.g., `The value of $\pi$ is...`, `Note that $\tau = \mu$`). Do not write raw LaTeX without delimiters.
+8.  **Inline Math**: any math symbols or variables inside the `text` field **MUST** be wrapped in single dollar signs (e.g., `The value of $\pi$ is...`, `Note that $\tau = \mu$`).
+    - **CRITICAL**: **ALWAYS** close your dollar signs.
+    - **CRITICAL**: **NEVER** put HTML tags (like `<b>`, `<i>`, `<p>`) or standard explanatory sentences INSIDE the `$` delimiters.
+    - **Bad**: `$\pi = 3.14 <p>This is pi</p>$`
+    - **Good**: `$\pi = 3.14$ <p>This is pi</p>`
 
 # Interactive Tools
 You have access to the following tools. Attach them in the `tool` property of the specific crumb object when relevant:

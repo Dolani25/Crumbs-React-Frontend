@@ -372,7 +372,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
             cursor: 'pointer'
           }}
         >
-          Try Baking Again <RefreshCw size={16} style={{ marginLeft: '10px' }} />
+          Try Baking Again <RefreshCw size={16} style={{ marginLeft: '7px', color: 'white', marginTop: '5px' }} />
         </button>
       </div>
     )
@@ -442,6 +442,17 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
         {parts.map((part, index) => {
           // Odd indices are Math (captured between $)
           if (index % 2 === 1) {
+            // Defensive Check: "Runaway Math"
+            // If the content contains HTML tags (like <p>, </div>, <br>) or is excessively long,
+            // it means the AI likely forgot a closing '$' and swallowed the following text.
+            // We fallback to rendering it as HTML to preserve readability.
+            const isRunaway = part.match(/<\/[a-z]+>/i) || part.match(/<(p|div|br|li|ul|h\d)/i) || part.length > 400;
+
+            if (isRunaway) {
+              // Render as text, restoring the leading '$' for context
+              return <span key={index} dangerouslySetInnerHTML={{ __html: "$" + part }} />;
+            }
+
             return <InlineMath key={index} math={part} />;
           }
           // Even indices are Text (HTML)

@@ -133,6 +133,7 @@ You have access to the following tools. Attach them in the `tool` property of th
       }
       ```
     - **Constraint**: Do NOT use `import` or `require`. Use standard math (`Math.sin`, etc.).
+    - **CRITICAL**: **NO `//` COMMENTS**. Single-line comments cause syntax errors if newlines are lost. Use `/* comment */` ONLY, or no comments at all.
 6.  **`physics-sandbox`**: **Rapier Physics Engine (3D)**
     - Use for **Dynamics/Forces** (Gravity, Collisions, Projectiles).
     - Mode A: `{ "mode": "sandbox" }` (Generic gravity lab).

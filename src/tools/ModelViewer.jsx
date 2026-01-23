@@ -425,9 +425,22 @@ const EngineeringScene = ({ type, data }) => {
 
     return (
         <group>
-            <ambientLight intensity={0.5} />
-            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-            <Environment preset="city" />
+            {/* Studio Lighting Rig */}
+            <hemisphereLight intensity={0.6} groundColor="#1a202c" color="#ffffff" />
+
+            {/* Main Key Light */}
+            <directionalLight position={[10, 10, 10]} intensity={2} castShadow >
+                <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
+            </directionalLight>
+
+            {/* Fill Light (Softens shadows) */}
+            <directionalLight position={[-10, 0, 10]} intensity={1} color="#bfdbfe" />
+
+            {/* Rim Light (Separates object from background) */}
+            <spotLight position={[0, 10, -10]} intensity={2} angle={0.5} penumbra={1} color="#a855f7" />
+
+            {/* Legacy Lights (Keep for fallback but adjust) */}
+            <ambientLight intensity={0.4} />
 
             <group position={[0, 0, 0]}>
                 {/* PRESETS */}

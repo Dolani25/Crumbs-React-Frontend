@@ -65,7 +65,40 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
 
     useEffect(() => {
         if (calculatorRef.current) {
+            // 1. Clear previous state slightly? No, setExpression updates existing IDs.
+            // But we should reset if expression changes drastically.
             calculatorRef.current.setExpression({ id: 'graph1', latex: expression });
+
+            // 2. Auto-Detect and Inject Sliders for Variables
+            // Common variables that need definitions
+            const commonVars = [
+                // Greek
+                '\\sigma', '\\mu', '\\alpha', '\\beta', '\\gamma', '\\lambda', '\\theta', '\\phi',
+                // Standard Params
+                'a', 'b', 'c', 'd', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't'
+            ];
+
+            // Exclude 'e' (Euler), 'x', 'y' (Axes), 'pi' (Constant) if simple check hits them
+
+            commonVars.forEach(v => {
+                // Simple substring check (Robust enough for this MVP)
+                // Note: Check if it exists in expression AND isn't just part of a word?
+                // Desmos latex usually separates vars. "\sigma" is distinct. "a" might be "tan".
+                // Regex: Look for variable preceded by non-letter (or start) and followed by non-letter (or end)
+                // Escape backslashes for regex
+                const escV = v.replace(/\\/g, '\\\\');
+                const regex = new RegExp(`(^|[^a-zA-Z\\\\])${escV}([^a-zA-Z]|$)`);
+
+                if (regex.test(expression)) {
+                    // Check if already defined? (Desmos handles overrides, but we default to 1)
+                    // strictly speaking we should only add if not present, but here we just ensure they exist.
+                    // Give them a unique ID so we don't overwrite the graph
+                    calculatorRef.current.setExpression({
+                        id: `slider_${v.replace('\\', '')}`,
+                        latex: `${v}=1`
+                    });
+                }
+            });
         }
     }, [expression]);
 

@@ -18,6 +18,7 @@ import ModelViewer from './tools/ModelViewer.jsx';
 
 import VolumeViewer from './tools/VolumeViewer'; // VTK.js Volume Tool
 import FlowChart from './tools/FlowChart'; // React Flow Process Tool
+import ManimVisualizer from './tools/ManimVisualizer'; // Manim-style P5 Tool
 
 // ... (imports)
 
@@ -684,6 +685,76 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
                 <ErrorBoundary>
                   <PhysicsSandbox data={currentCrumb.tool.data} />
                 </ErrorBoundary>
+              </div>
+            )}
+
+            {/* Manim-style Video Engine */}
+            {(currentCrumb.tool?.type === 'video-explainer') && (
+              <div style={{
+                marginTop: '40px',
+                background: '#0f172a', /* Dark slate background */
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: '1px solid #1e293b',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+              }}>
+                {/* Header Container */}
+                <div style={{
+                  padding: '12px 20px',
+                  borderBottom: '1px solid #1e293b',
+                  background: '#1e293b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  {/* Yellow Icon */}
+                  <div style={{
+                    width: '32px', height: '32px',
+                    background: 'rgba(251, 191, 36, 0.1)',
+                    borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid rgba(251, 191, 36, 0.2)'
+                  }}>
+                    <i className="las la-film" style={{ color: '#fbbf24', fontSize: '1.2rem' }}></i>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ margin: 0, color: '#f1f5f9', fontSize: '0.95rem', fontWeight: '600' }}>
+                      {currentCrumb.tool.data.title || "Concept Visualizer"}
+                    </h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                      <span style={{
+                        background: '#fbbf24',
+                        color: '#000',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        AI Generated
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        • Manim JS Engine <i className="las la-play-circle" style={{ fontSize: '0.8rem' }}></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Canvas Area */}
+                <div style={{ height: '400px', position: 'relative', background: 'black' }}>
+                  <ErrorBoundary>
+                    <ManimVisualizer scriptContent={currentCrumb.tool.data?.script} />
+                  </ErrorBoundary>
+                </div>
+
+                {/* Footer / Caption */}
+                <div style={{ padding: '10px 20px', background: '#0f172a', borderTop: '1px solid #1e293b' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', textAlign: 'center' }}>
+                    Watch this step by step procedural animation.
+                  </p>
+                </div>
               </div>
             )}
 

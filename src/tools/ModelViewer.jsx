@@ -1,6 +1,5 @@
-/* eslint-disable react/no-unknown-property */
-import React, { useRef, useState, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import Renderer from "../components/Renderer"; // Unified WebGPU Renderer
+import { useFrame } from "@react-three/fiber";
 import {
     OrbitControls,
     PerspectiveCamera,
@@ -11,6 +10,75 @@ import {
     Billboard
 } from "@react-three/drei";
 import * as THREE from "three";
+
+// ... (PROCEDURAL COMPONENTS - Unchanged) ...
+
+// ... (DYNAMIC MODEL - Unchanged) ...
+
+// ... (ENGINEERING SCENE - Unchanged)
+
+// Update ModelViewer to use Renderer
+const ModelViewer = ({ type, data, title }) => {
+    return (
+        <div className="model-viewer-container" style={{
+            width: '100%',
+            height: '400px',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            background: 'linear-gradient(to bottom right, #111827, #1f2937)',
+            position: 'relative',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+            {/* Header Badge */}
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '20px',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '5px'
+            }}>
+                <div style={{
+                    background: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#e5e7eb',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%' }}></div>
+                    {title || "3D Interactive Model"}
+                </div>
+                <div style={{
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    color: '#93c5fd',
+                    fontSize: '0.7rem',
+                    fontFamily: 'monospace',
+                    width: 'fit-content'
+                }}>
+                    MODE: PROCEDURAL_ENGINE
+                </div>
+            </div>
+
+            <Renderer shadows dpr={[1, 2]}>
+                <PerspectiveCamera makeDefault position={[4, 4, 6]} fov={45} />
+                <OrbitControls minDistance={2} maxDistance={15} autoRotate autoRotateSpeed={0.5} />
+                <EngineeringScene type={type} data={data} />
+            </Renderer>
+        </div>
+    );
+};
+
 
 // --- PROCEDURAL COMPONENTS ---
 

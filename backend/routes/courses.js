@@ -88,10 +88,10 @@ router.post('/:id/topics', auth, async (req, res) => {
         const course = await Course.findById(req.params.id);
         if (!course) return res.status(404).json({ msg: 'Course not found' });
 
-        // Check ownership (Optional for demo)
-        // if (course.createdBy.toString() !== req.user.id) {
-        //   return res.status(401).json({ msg: 'User not authorized' });
-        // }
+        // Check ownership
+        if (course.createdBy.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
 
         const newTopic = { title, icon, subtopics: [] };
         course.topics.push(newTopic);
@@ -113,6 +113,11 @@ router.post('/:id/topics/:topicId/subtopics', auth, async (req, res) => {
     try {
         const course = await Course.findById(req.params.id);
         if (!course) return res.status(404).json({ msg: 'Course not found' });
+
+        // Check ownership
+        if (course.createdBy.toString() !== req.user.id) {
+            return res.status(401).json({ msg: 'User not authorized' });
+        }
 
         // HYBRID ENGINE INTEGRATION
         // If no content is provided, ask the Content Engine to generate it (RAG + AI)
@@ -168,6 +173,61 @@ router.get('/crumb/:id', async (req, res) => {
     }
 });
 
+// @route   POST api/courses/hash-compare
+// @desc    Compare local vs cloud hashes to reduce bandwidth
+// @access  Private
+router.post('/hash-compare', auth, async (req, res) => {
+    const { localHashes } = req.body; // { courseId: "hash123", ... }
+    const userId = req.user.id;
+    const crypto = require('crypto');
+
+    try {
+        // Fetch all courses for user (lightweight)
+        const dbCourses = await Course.find({ createdBy: userId });
+
+        // Compute DB Hashes
+        const dbHashes = dbCourses.reduce((acc, c) => {
+            // Create a deterministic hash (SHA-256 to match Frontend crypto.subtle)
+            const content = JSON.stringify({
+                title: c.title,
+                topics: c.topics,
+                updatedAt: c.updatedAt
+            });
+            const hash = crypto.createHash('sha256').update(content).digest('hex');
+
+            acc[c._id.toString()] = hash;
+            return acc;
+        }, {});
+
+        // Find Conflicts (IDs where hashes differ)
+        // Note: Client might have new IDs (not in DB) or deleted IDs (in DB but not local)
+        // But for sync optimization, we mainly care about what conflicts with DB.
+
+        const conflicts = [];
+
+        // 1. Check Local vs DB
+        Object.keys(localHashes).forEach(localId => {
+            if (dbHashes[localId] && dbHashes[localId] !== localHashes[localId]) {
+                conflicts.push(localId); // Exists in both but differs
+            } else if (!dbHashes[localId]) {
+                conflicts.push(localId); // New item locally (needs upload)
+            }
+        });
+
+        // 2. Check DB vs Local (Missing locally?)
+        // Implicitly handled: if DB has it and Local doesn't, we might want to download it?
+        // For now, let's stick to the requested "conflict" logic to reduce upload size.
+        // If we want to download new stuff, we can just return the full dbHashes list to client 
+        // effectively, and let client decide what to pull.
+
+        res.json({ conflicts, dbHashes });
+
+    } catch (err) {
+        console.error("Hash Compare Error:", err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   POST api/courses/sync
 // @desc    Sync local courses to cloud (Upsert)
 // @access  Private
@@ -198,9 +258,11 @@ router.post('/sync', auth, async (req, res) => {
             const { _id, ...courseData } = course;
 
             // SAFETY CHECK: Do not sync courses that belong to another user
-            // This prevents "Data Contamination" if LocalStorage was shared
             if (course.createdBy && course.createdBy.toString() !== userId) {
-                console.warn(`⚠️ Skipping sync for foreign course: "${course.title}" (Owner: ${course.createdBy})`);
+                console.warn(`! SECURITY: Course Ownership Mismatch for "${course.title}"`);
+                console.warn(`  Course Owner: ${course.createdBy}`);
+                console.warn(`  Current User: ${userId}`);
+                // Silently skip (don't sync malicious payload)
                 return;
             }
 

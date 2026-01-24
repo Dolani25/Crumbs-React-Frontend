@@ -24,6 +24,8 @@ import NotFound from './pages/NotFound.jsx';
 import { dummyCourses } from './dummyCourses.js';
 import { loadUser, syncCourses, updateXP, deleteCourse } from './api.js';
 
+import { secureStorage } from './utils/secureStorage.js';
+
 function App() {
   const location = useLocation();
 
@@ -34,104 +36,170 @@ function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Courses State
-  const [courses, setCourses] = useState(() => {
-    // Optimistic Load from LocalStorage to prevent flash
-    const savedCourses = localStorage.getItem('crumbs_courses');
-    return savedCourses ? JSON.parse(savedCourses).flat() : dummyCourses;
-  });
+  // Courses State - Initialized empty, loaded via effect
+  const [courses, setCourses] = useState([]);
+
+  // Sync State
+  const [isDirty, setIsDirty] = useState(false);
+  const markDirty = () => setIsDirty(true);
 
   // Check Auth on Mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('crumbs_token');
+      // 1. Migrate Legacy Data if needed
+      await secureStorage.migrateFromLocalStorage();
+
+      const token = await secureStorage.getItem('crumbs_token');
       if (token) {
         try {
           const userData = await loadUser(); // Verify token is valid & get user data
           setUser({ ...userData, is_authenticated: true });
 
-          // Initial Cloud Pull/Sync on Login
-          if (userData && dummyCourses) {
-            const local = JSON.parse(localStorage.getItem('crumbs_courses')) || [];
-            if (local.length > 0) {
-              // Normalize: Backend expects 'title', Frontend often uses 'name'
-              const normalizedLocal = local.flat().map(c => ({
-                ...c,
-                title: c.title || c.name || "Untitled Course"
-              }));
+          // 🔧 CRITICAL: Only load/sync cloud data after confirming user identity
+          // This prevents "Data Contamination" from a previous user's localStorage
 
-              syncCourses(normalizedLocal)
-                .then(cloudCourses => {
-                  // Update local with cloud truth to get real IDs
-                  setCourses(cloudCourses);
-                  localStorage.setItem('crumbs_courses', JSON.stringify(cloudCourses));
-                  console.log("☁️  Synched with Cloud", cloudCourses);
-                })
-                .catch(console.error);
-            } else {
-              // EMPTY LOCAL: Fetch from Cloud (Pull Strategy)
-              console.log("☁️  New Device detected. Fetching cloud library...");
-              syncCourses([]).then(cloudCourses => {
-                if (cloudCourses && cloudCourses.length > 0) {
-                  setCourses(cloudCourses);
-                  localStorage.setItem('crumbs_courses', JSON.stringify(cloudCourses));
-                  console.log("☁️  Library restored from Cloud.");
-                }
-              }).catch(console.error);
+          const local = (await secureStorage.getItem('crumbs_courses')) || [];
+
+          if (local.length > 0) {
+            const normalizedLocal = local.flat().map(c => ({
+              ...c,
+              title: c.title || c.name || "Untitled Course"
+            }));
+
+            // Sync with Cloud Truth
+            // If local courses belong to another user (backend check), the sync will reject them
+            // or the backed will just return the valid user courses.
+            try {
+              const cloudCourses = await syncCourses(normalizedLocal);
+              setCourses(cloudCourses);
+              await secureStorage.setItem('crumbs_courses', cloudCourses);
+              console.log("☁️  Secure Sync Complete");
+            } catch (syncErr) {
+              console.warn("Sync warning:", syncErr);
+              // Fallback: If sync fails (e.g. data conflict), fetch fresh from cloud
+              const fresh = await syncCourses([]);
+              if (fresh) setCourses(fresh);
+            }
+          } else {
+            // EMPTY LOCAL: Fetch from Cloud (Pull Strategy)
+            const cloudCourses = await syncCourses([]);
+            if (cloudCourses && cloudCourses.length > 0) {
+              setCourses(cloudCourses);
+              await secureStorage.setItem('crumbs_courses', cloudCourses);
             }
           }
 
         } catch (err) {
+          console.error("Auth Failed:", err);
+          // If token is invalid, clear everything to be safe
           setUser(null);
-          localStorage.removeItem('crumbs_token');
+          // secureStorage.setItem('crumbs_token', null); // Handled by clearAll
+          setCourses([]); // Clear potential leaked data
+          secureStorage.clearAll();
         }
+      } else {
+        // No Token = No User = No Data
+        setCourses([]);
       }
       setIsLoading(false);
     };
     checkAuth();
   }, []);
 
-  // Sync Logic: Watch 'courses' and user state
+  // Sync Logic: Watch 'isDirty' and user state
   useEffect(() => {
-    const autoSync = async () => {
-      if (user && courses.length > 0) {
-        try {
-          const normalized = courses
-            .flat()
-            .filter(c => c && (c.title || c.name) && (c.title !== "Untitled Course" || c.subtopics)) // Strict Filter
-            .map(c => {
-              let finalTopics = c.topics || [];
-              if ((!finalTopics || finalTopics.length === 0) && c.subtopics && c.subtopics.length > 0) {
-                finalTopics = [{
-                  title: "Course Modules",
-                  icon: "fas fa-layer-group",
-                  subtopics: c.subtopics
-                }];
-              }
-              return {
-                ...c,
-                title: c.title || c.name || "Untitled Course",
-                topics: finalTopics
-              };
-            });
+    if (!user || courses.length === 0) return;
 
-          if (normalized.length === 0) return; // Nothing to sync
+    // Optimized Auto-Sync
+    const optimizedSync = async () => {
+      // 1. If no local changes (clean), skip hash check entirely? 
+      // User requested hash comparison "before full lesson sync". 
+      // But purely relying on 'isDirty' misses changes from other devices (Pull).
+      // So we should verify hashes periodically regardless of dirty state to catch *remote* changes.
 
-          const synced = await syncCourses(normalized);
-          console.log("☁️  Auto-Saved to Cloud");
-        } catch (err) {
-          console.error("Cloud Sync Failed", err);
+      try {
+        const normalized = courses
+          .flat()
+          .filter(c => c && (c.title || c.name) && (c.title !== "Untitled Course" || c.subtopics))
+          .map(c => {
+            // ... normalization logic matching previous code ...
+            let finalTopics = c.topics || [];
+            if ((!finalTopics || finalTopics.length === 0) && c.subtopics && c.subtopics.length > 0) {
+              finalTopics = [{
+                title: "Course Modules",
+                icon: "fas fa-layer-group",
+                subtopics: c.subtopics
+              }];
+            }
+            return {
+              ...c,
+              title: c.title || c.name || "Untitled Course",
+              topics: finalTopics
+            };
+          });
+
+        if (normalized.length === 0) return;
+
+        // 2. Hash Comparison (Bandwidth Saver)
+        const { hashCompareCourses, syncCourses } = await import('./api.js');
+        const comparison = await hashCompareCourses(normalized);
+
+        if (comparison.conflicts.length === 0) {
+          console.log("✅ Sync: All clear (Hashes matched)");
+          setIsDirty(false);
+          return;
         }
+
+        console.log(`⚠️ Sync: Found ${comparison.conflicts.length} conflicting courses.`);
+
+        // 3. Only Sync Conflicting Courses
+        // Note: New courses (no ID yet) should also be synced.
+        // normalized items might not have _id if they are truly new.
+        const toSync = normalized.filter(c =>
+          // If it has an ID, check if it's in conflicts
+          (c._id && comparison.conflicts.includes(c._id)) ||
+          // If it doesn't have a backend ID yet, it needs syncing
+          !c._id
+        );
+
+        if (toSync.length > 0) {
+          const synced = await syncCourses(toSync);
+
+          // Merge results back (Preserve non-synced courses)
+          setCourses(prev => {
+            const merged = [...prev];
+            synced.forEach(s => {
+              const idx = merged.findIndex(p => (p._id && p._id === s._id) || p.title === s.title);
+              if (idx !== -1) merged[idx] = s;
+            });
+            return merged;
+          });
+          console.log("☁️  Auto-Saved Conflicting Data");
+        }
+
+        setIsDirty(false);
+
+      } catch (err) {
+        console.error("Cloud Sync Failed", err);
       }
     };
 
+    // Debounce: 10 seconds
     const timeoutId = setTimeout(() => {
-      autoSync();
-    }, 2000); // 2 second debounce
+      // Trigger if dirty OR periodically?
+      // User pattern: "if (!isDirty || !user) return;" -> Only sync if dirty.
+      // But what about Pulling new data?
+      // User asked: "before full lesson sync do hash comparison".
+      // User asked: "Only trigger sync if actual changes occurred".
+      // I will follow the user's explicit dirty-only logic for *sending*.
+      if (isDirty) {
+        optimizedSync();
+      }
+    }, 10000);
 
     return () => clearTimeout(timeoutId);
 
-  }, [courses, user]);
+  }, [courses, user, isDirty]);
 
   const handleCourseUpload = async (newCourses) => {
     // 1. Calculate new state & Flatten to prevent nested arrays
@@ -158,7 +226,8 @@ function App() {
 
     // 2. Local Update
     setCourses(updated);
-    localStorage.setItem('crumbs_courses', JSON.stringify(updated));
+    await secureStorage.setItem('crumbs_courses', updated);
+    setIsDirty(true); // Mark for background sync
 
     // 3. Force Cloud Sync
     if (user) {
@@ -183,7 +252,7 @@ function App() {
         const synced = await syncCourses(normalized);
         // Update with backend IDs immediately to avoid Delete 404s later
         setCourses(synced);
-        localStorage.setItem('crumbs_courses', JSON.stringify(synced));
+        await secureStorage.setItem('crumbs_courses', synced);
         console.log("☁️  Uploaded Course Synced & IDs Updated");
       } catch (err) {
         console.error("Failed to sync new course", err);
@@ -200,9 +269,10 @@ function App() {
       // Optimistic UI Update
       setCourses(prev => {
         const updated = prev.filter(c => c.id !== courseId && c._id !== courseId);
-        localStorage.setItem('crumbs_courses', JSON.stringify(updated));
+        secureStorage.setItem('crumbs_courses', updated); // Fire and forget promise
         return updated;
       });
+      setIsDirty(true);
 
       // API Call if user is authenticated (and course has real ID)
       // Only verify against backend if it looks like a MongoID (24 chars)
@@ -260,7 +330,8 @@ function App() {
 
     // 2. Update Local State
     setCourses(updatedCourses);
-    localStorage.setItem('crumbs_courses', JSON.stringify(updatedCourses));
+    await secureStorage.setItem('crumbs_courses', updatedCourses);
+    setIsDirty(true);
 
     // 3. Force Cloud Sync (Immediate) with Normalization
     if (user) {
@@ -344,7 +415,8 @@ function App() {
         return course;
       });
 
-      localStorage.setItem('crumbs_courses', JSON.stringify(updatedCourses));
+      secureStorage.setItem('crumbs_courses', updatedCourses);
+      setIsDirty(true);
       return updatedCourses;
     });
   };
@@ -373,19 +445,33 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('crumbs_token');
+    // 🔧 SECURE LOGOUT: Clear all user data
+    secureStorage.clearAll();
+
+    // Explicitly clear legacy keys just in case
+    // localStorage.removeItem('crumbs_token'); // Handled by clearAll
+    // localStorage.removeItem('crumbs_courses');
+
     setUser(null);
+    setCourses([]); // Clear in-memory courses to prevent ghost data
+    setTheme('dark');
+
+    console.log("🔐 User logged out. All data cleared.");
   };
 
   // Theme State
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('crumbs_theme') || 'dark';
-  });
+  const [theme, setTheme] = useState('dark'); // Default to dark, load async
+
+  useEffect(() => {
+    secureStorage.getItem('crumbs_theme').then(t => {
+      if (t) setTheme(t);
+    });
+  }, []);
 
   // Apply theme on mount/change
   useEffect(() => {
     document.body.className = theme;
-    localStorage.setItem('crumbs_theme', theme);
+    secureStorage.setItem('crumbs_theme', theme);
   }, [theme]);
 
   // Sync theme from user profile when logged in
@@ -432,7 +518,7 @@ function App() {
 
     if (user) {
       try {
-        const token = localStorage.getItem('crumbs_token');
+        const token = await secureStorage.getItem('crumbs_token');
         if (token) {
           await fetch(`${API_URL}/api/auth/preferences`, {
             method: 'PUT',

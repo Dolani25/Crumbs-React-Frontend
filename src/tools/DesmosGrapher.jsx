@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { validateDesmosExpression, isValidDesmosExpression } from '../utils/latexValidator';
 
 const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) => {
     const calculatorRef = useRef(null);
     const elementRef = useRef(null);
     const [error, setError] = useState(null);
+    const [isValidated, setIsValidated] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -21,7 +23,29 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                         yAxisStep: 1
                     });
 
-                    calculatorRef.current.setExpression({ id: 'graph1', latex: expression });
+                    // 🔧 Validate and sanitize expression before setting
+                    const validatedExpr = validateDesmosExpression(expression);
+
+                    try {
+                        calculatorRef.current.setExpression({
+                            id: 'graph1',
+                            latex: validatedExpr
+                        });
+                        setIsValidated(true);
+                    } catch (desmosErr) {
+                        console.error("Desmos setExpression failed:", desmosErr);
+                        // Try a fallback expression
+                        if (validatedExpr !== 'y=x') {
+                            console.warn("Falling back to y=x");
+                            calculatorRef.current.setExpression({
+                                id: 'graph1',
+                                latex: 'y=x'
+                            });
+                        }
+                        if (mounted) {
+                            setError(`Failed to parse equation: "${expression}". Using default.`);
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Desmos initialization failed:", err);
@@ -46,7 +70,6 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                 };
                 document.body.appendChild(script);
             } else {
-                // Script exists but maybe not loaded yet?
                 const existingScript = document.getElementById('desmos-script');
                 existingScript.addEventListener('load', initCalculator);
             }
@@ -65,47 +88,54 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
 
     useEffect(() => {
         if (calculatorRef.current) {
-            // 1. Clear previous state slightly? No, setExpression updates existing IDs.
-            // But we should reset if expression changes drastically.
-            calculatorRef.current.setExpression({ id: 'graph1', latex: expression });
+            // 🔧 Validate before updating
+            const validatedExpr = validateDesmosExpression(expression);
 
-            // 2. Auto-Detect and Inject Sliders for Variables
-            // Common variables that need definitions
-            const commonVars = [
-                // Greek
-                '\\sigma', '\\mu', '\\alpha', '\\beta', '\\gamma', '\\lambda', '\\theta', '\\phi',
-                // Standard Params
-                'a', 'b', 'c', 'd', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't'
-            ];
+            try {
+                calculatorRef.current.setExpression({
+                    id: 'graph1',
+                    latex: validatedExpr
+                });
 
-            // Exclude 'e' (Euler), 'x', 'y' (Axes), 'pi' (Constant) if simple check hits them
+                // Auto-Detect and Inject Sliders for Variables
+                const commonVars = [
+                    '\\sigma', '\\mu', '\\alpha', '\\beta', '\\gamma', '\\lambda', '\\theta', '\\phi',
+                    'a', 'b', 'c', 'd', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't'
+                ];
 
-            commonVars.forEach(v => {
-                // Simple substring check (Robust enough for this MVP)
-                // Note: Check if it exists in expression AND isn't just part of a word?
-                // Desmos latex usually separates vars. "\sigma" is distinct. "a" might be "tan".
-                // Regex: Look for variable preceded by non-letter (or start) and followed by non-letter (or end)
-                // Escape backslashes for regex
-                const escV = v.replace(/\\/g, '\\\\');
-                const regex = new RegExp(`(^|[^a-zA-Z\\\\])${escV}([^a-zA-Z]|$)`);
+                commonVars.forEach(v => {
+                    const escV = v.replace(/\\/g, '\\\\');
+                    const regex = new RegExp(`(^|[^a-zA-Z\\\\])${escV}([^a-zA-Z]|$)`);
 
-                if (regex.test(expression)) {
-                    // Check if already defined? (Desmos handles overrides, but we default to 1)
-                    // strictly speaking we should only add if not present, but here we just ensure they exist.
-                    // Give them a unique ID so we don't overwrite the graph
-                    calculatorRef.current.setExpression({
-                        id: `slider_${v.replace('\\', '')}`,
-                        latex: `${v}=1`
-                    });
-                }
-            });
+                    if (regex.test(validatedExpr)) {
+                        calculatorRef.current.setExpression({
+                            id: `slider_${v.replace(/\\/g, '')}`,
+                            latex: `${v}=1`
+                        });
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to update Desmos expression:", err);
+                if (mounted) setError(`Invalid equation syntax: ${err.message}`);
+            }
         }
     }, [expression]);
 
     if (error) {
         return (
-            <div className="tool-container" style={{ padding: '20px', textAlign: 'center', background: '#fff0f0', borderRadius: '8px', color: 'red' }}>
+            <div className="tool-container" style={{
+                padding: '20px',
+                textAlign: 'center',
+                background: '#fef3c7',
+                borderRadius: '8px',
+                color: '#92400e',
+                border: '1px solid #fcd34d'
+            }}>
+                <i className="fas fa-exclamation-triangle" style={{ marginRight: '8px' }}></i>
                 <p>⚠️ {error}</p>
+                <p style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+                    The equation couldn't be plotted. Try a simpler expression.
+                </p>
             </div>
         )
     }

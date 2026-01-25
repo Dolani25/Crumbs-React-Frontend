@@ -78,6 +78,22 @@ export const secureStorage = {
         } catch (e) {
             console.warn("Migration warning:", e);
         }
+    },
+
+    /**
+     * Standard Storage Interface (Unscoped / Direct Access)
+     * Used by App.jsx for global keys or simple migration
+     */
+    async getItem(key) {
+        return await db.get(key);
+    },
+
+    async setItem(key, value) {
+        return await db.set(key, value);
+    },
+
+    async removeItem(key) {
+        return await db.delete(key);
     }
 };
 

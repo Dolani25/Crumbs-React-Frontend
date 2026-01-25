@@ -43,6 +43,39 @@ function App() {
   const [isDirty, setIsDirty] = useState(false);
   const markDirty = () => setIsDirty(true);
 
+  // Helper: Load & Sync Courses from Cloud/Local
+  // Defined here to be accessible by both checkAuth and setAuth
+  const loadAndSyncCourses = async () => {
+    const local = (await secureStorage.getItem('crumbs_courses')) || [];
+
+    if (local.length > 0) {
+      const normalizedLocal = local.flat().map(c => ({
+        ...c,
+        title: c.title || c.name || "Untitled Course"
+      }));
+
+      // Sync with Cloud Truth
+      try {
+        const cloudCourses = await syncCourses(normalizedLocal);
+        setCourses(cloudCourses);
+        await secureStorage.setItem('crumbs_courses', cloudCourses);
+        console.log("☁️  Secure Sync Complete");
+      } catch (syncErr) {
+        console.warn("Sync warning:", syncErr);
+        // Fallback: If sync fails (e.g. data conflict), fetch fresh from cloud
+        const fresh = await syncCourses([]);
+        if (fresh) setCourses(fresh);
+      }
+    } else {
+      // EMPTY LOCAL: Fetch from Cloud (Pull Strategy)
+      const cloudCourses = await syncCourses([]);
+      if (cloudCourses && cloudCourses.length > 0) {
+        setCourses(cloudCourses);
+        await secureStorage.setItem('crumbs_courses', cloudCourses);
+      }
+    }
+  };
+
   // Check Auth on Mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,38 +89,7 @@ function App() {
           setUser({ ...userData, is_authenticated: true });
 
           // 🔧 CRITICAL: Only load/sync cloud data after confirming user identity
-          // This prevents "Data Contamination" from a previous user's localStorage
-
-          const local = (await secureStorage.getItem('crumbs_courses')) || [];
-
-          if (local.length > 0) {
-            const normalizedLocal = local.flat().map(c => ({
-              ...c,
-              title: c.title || c.name || "Untitled Course"
-            }));
-
-            // Sync with Cloud Truth
-            // If local courses belong to another user (backend check), the sync will reject them
-            // or the backed will just return the valid user courses.
-            try {
-              const cloudCourses = await syncCourses(normalizedLocal);
-              setCourses(cloudCourses);
-              await secureStorage.setItem('crumbs_courses', cloudCourses);
-              console.log("☁️  Secure Sync Complete");
-            } catch (syncErr) {
-              console.warn("Sync warning:", syncErr);
-              // Fallback: If sync fails (e.g. data conflict), fetch fresh from cloud
-              const fresh = await syncCourses([]);
-              if (fresh) setCourses(fresh);
-            }
-          } else {
-            // EMPTY LOCAL: Fetch from Cloud (Pull Strategy)
-            const cloudCourses = await syncCourses([]);
-            if (cloudCourses && cloudCourses.length > 0) {
-              setCourses(cloudCourses);
-              await secureStorage.setItem('crumbs_courses', cloudCourses);
-            }
-          }
+          await loadAndSyncCourses();
 
         } catch (err) {
           console.error("Auth Failed:", err);
@@ -438,7 +440,11 @@ function App() {
   const setAuth = (bool) => {
     // Reload user data if strictly setting true (e.g. after login)
     if (bool) {
-      loadUser().then(data => setUser({ ...data, is_authenticated: true }));
+      loadUser().then(async (data) => {
+        setUser({ ...data, is_authenticated: true });
+        // ☁️ Auto-Sync Immediately on Login
+        await loadAndSyncCourses();
+      });
     } else {
       setUser(null);
     }

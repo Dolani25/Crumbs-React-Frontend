@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import Renderer from "../components/Renderer"; // Unified WebGPU Renderer
 import { useFrame } from "@react-three/fiber";
 import {

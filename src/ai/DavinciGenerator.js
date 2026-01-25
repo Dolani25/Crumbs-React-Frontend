@@ -1,20 +1,9 @@
 import { LessonSchema } from "./schemas";
 import systemPrompt from "./davinci_prompt.md?raw";
+import api from '../api';
 
 export const generateCrumb = async (courseName, subtopicTitle) => {
     console.log(`🧠 Generating lesson for: ${courseName} - ${subtopicTitle}`);
-
-    // Helper to wait for Puter (up to 5s)
-    const waitForPuter = async () => {
-        let attempts = 0;
-        while (!window.puter && attempts < 20) { // 20 * 250ms = 5s
-            await new Promise(r => setTimeout(r, 250));
-            attempts++;
-        }
-        if (!window.puter) throw new Error("Puter.js not loaded. Cannot generate content.");
-    };
-
-    await waitForPuter();
 
     // 1. Construct the Prompt
     const fullPrompt = `
@@ -139,12 +128,6 @@ Remember to return ONLY valid JSON matching the schema.
 export const generateRemedialCrumb = async (courseName, failedConcept, userWeakness = "visual") => {
     console.log(`🚑 Generating Remedial Crumb for: ${failedConcept} (Mode: ${userWeakness})`);
 
-    if (!window.puter) {
-        // Simple internal wait if not loaded
-        await new Promise(r => setTimeout(r, 1000));
-        if (!window.puter) throw new Error("Puter not ready");
-    }
-
     const remedialPrompt = `
 ### ROLE
 You are the "Learning DNA" Engine.
@@ -168,11 +151,18 @@ Generate a specific interaction that makes "${failedConcept}" click.
 `;
 
     try {
-        const response = await window.puter.ai.chat(remedialPrompt, {
+        const puterToken = localStorage.getItem('puter.auth.token');
+        const puterAppId = localStorage.getItem('puter.app.id');
+
+        const response = await api.post('/ai/generate', {
+            prompt: remedialPrompt,
             model: 'gemini-2.5-flash',
-            responseInfo: { mimeType: "application/json" }
+            mimeType: 'application/json',
+            puterToken,
+            puterAppId
         });
-        const cleanJson = response.message.content;
+
+        const cleanJson = response.data.message.content;
         const crumb = JSON.parse(cleanJson);
         // Minimal validation - check if tool exists
         if (!crumb.tool) throw new Error("AI failed to generate a tool.");

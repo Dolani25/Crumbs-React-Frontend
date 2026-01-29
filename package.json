@@ -46,7 +46,7 @@
     "reactflow": "^11.11.4",
     "recharts": "^3.6.0",
     "three": "^0.182.0",
-    "vite": "^6.1.0",
+    "vite": "^6.4.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {

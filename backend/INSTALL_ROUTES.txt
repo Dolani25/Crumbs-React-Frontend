@@ -1,0 +1,2 @@
+// Add this line after line 49 in server2.js:
+app.use('/api/sketchfab', require('./routes/sketchfab')); // Sketchfab 3D Models

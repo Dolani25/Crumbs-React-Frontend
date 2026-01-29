@@ -1,0 +1,10 @@
+// BarChart.jsx Fix - Add after line 8
+// Replace:
+if (!data || data.length === 0 || !width || !height) return;
+
+// With:
+if (!data || data.length === 0 || !width || !height) return;
+if (!data[0] || typeof data[0] !== 'object') {
+    console.error('BarChart: Invalid data format', data);
+    return;
+}

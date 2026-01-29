@@ -8,7 +8,8 @@ import {
     ContactShadows,
     Float,
     Text,
-    Billboard
+    Billboard,
+    Html
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -335,7 +336,54 @@ const DynamicModel = ({ shapes }) => {
     )
 };
 
-const ExternalModel = ({ url }) => {
+const ExternalModel = ({ url, attribution }) => {
+    const isSketchfab = url && url.includes('sketchfab.com');
+
+    if (isSketchfab) {
+        return (
+            <group>
+                <Html
+                    fullscreen
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0
+                    }}
+                >
+                    <iframe
+                        src={url}
+                        title="Sketchfab 3D Model"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                            background: 'transparent'
+                        }}
+                        allow="autoplay; fullscreen; xr-spatial-tracking"
+                        allowFullScreen
+                    />
+                    {attribution && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            left: '10px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: 'white',
+                            padding: '5px 10px',
+                            borderRadius: '5px',
+                            fontSize: '0.75rem',
+                            pointerEvents: 'none'
+                        }}>
+                            📦 {attribution}
+                        </div>
+                    )}
+                </Html>
+            </group>
+        );
+    }
+
     return (
         <Float>
             <group>
@@ -343,9 +391,12 @@ const ExternalModel = ({ url }) => {
                     <boxGeometry args={[1, 1, 1]} />
                     <meshStandardMaterial color="#F472B6" />
                 </mesh>
+                <Billboard position={[0, 1.5, 0]}>
+                    <Text fontSize={0.3} color="white">External Model</Text>
+                </Billboard>
             </group>
         </Float>
-    )
+    );
 };
 
 // --- HIGH FIDELITY PRESETS ---
@@ -522,7 +573,8 @@ const EngineeringScene = ({ type, data }) => {
                 {!preset && data?.shapes && <DynamicModel shapes={data.shapes} />}
 
                 {/* MODE B: EXTERNAL URL */}
-                {data?.url && <ExternalModel url={data.url} />}
+                {data?.url && <ExternalModel url={data.url} attribution={data.attribution || data.source} />}
+
 
                 {/* LEGACY FALLBACKS */}
                 {!preset && !data?.shapes && type === 'DRILL' && <ProceduralDrill params={data} />}

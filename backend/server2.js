@@ -47,6 +47,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/library', require('./routes/library'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/ai', require('./routes/ai')); // AI Proxy
+app.use('/api/sketchfab', require('./routes/sketchfab')); // Sketchfab 3D Models
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health Check

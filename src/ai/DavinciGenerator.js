@@ -113,6 +113,70 @@ Remember to return ONLY valid JSON matching the schema.
 
         validatedLesson.crumbs = updatedCrumbs;
 
+        // 6. Post-Process: Fetch Sketchfab 3D Models (if requested)
+        try {
+            const dataSavingMode = false; // TODO: Get from user settings
+
+            for (const crumb of validatedLesson.crumbs) {
+                if (crumb.tool?.type === 'model-viewer' && crumb.tool.data?.sketchfab) {
+                    // Check data saving mode
+                    if (dataSavingMode) {
+                        console.warn('⚠️ Sketchfab disabled by data saving mode - using AI fallback');
+                        delete crumb.tool.data.sketchfab;
+                        delete crumb.tool.data.query;
+                        // Convert to fallback procedural model
+                        crumb.tool.data.shapes = [
+                            { shape: 'box', args: [1, 1, 1], color: '#888' }
+                        ];
+                        continue;
+                    }
+
+                    // Fetch from Sketchfab API
+                    const query = crumb.tool.data.query;
+                    console.log(`🎨 Fetching Sketchfab model: "${query}"`);
+
+                    try {
+                        const response = await fetch(`/api/sketchfab/search?q=${encodeURIComponent(query)}&count=1`);
+
+                        if (!response.ok) {
+                            throw new Error(`Sketchfab API error: ${response.status}`);
+                        }
+
+                        const models = await response.json();
+
+                        if (models && models.length > 0) {
+                            // Use first result
+                            const model = models[0];
+                            console.log(`✅ Found Sketchfab model: "${model.name}"`);
+
+                            crumb.tool.data = {
+                                url: model.embedUrl,
+                                attribution: model.name,
+                                source: 'sketchfab',
+                                author: model.author
+                            };
+                        } else {
+                            console.warn(`⚠️ No Sketchfab models found for "${query}" - using AI fallback`);
+                            delete crumb.tool.data.sketchfab;
+                            crumb.tool.data.shapes = [
+                                { shape: 'sphere', args: [1, 32, 16], color: '#4a90e2' }
+                            ];
+                        }
+                    } catch (error) {
+                        console.error(`❌ Sketchfab fetch failed for "${query}":`, error);
+                        // Fallback to procedural
+                        delete crumb.tool.data.sketchfab;
+                        crumb.tool.data.shapes = [
+                            { shape: 'sphere', args: [1, 32, 16], color: '#e74c3c' }
+                        ];
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('❌ Sketchfab processing error:', error);
+            // Continue even if Sketchfab fails
+        }
+
         return validatedLesson;
 
     } catch (error) {

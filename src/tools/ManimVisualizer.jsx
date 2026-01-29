@@ -8,17 +8,7 @@ const ManimVisualizer = ({ scriptContent }) => {
     useEffect(() => {
         const loadScripts = async () => {
             const scripts = [
-                '/manim/lib/p5/p5.min.js', // Core dependency
-                // Manim Libs
-                '/manim/src/globals.js',
-                '/manim/src/proto.js',
-                '/manim/src/math.js',
-                '/manim/src/graphics.js',
-                '/manim/src/utils.js',
-                '/manim/src/text.js',
-                '/manim/src/timer.js',
-                '/manim/src/3d.js',
-                '/manim/src/brain.js',
+                '/manim/lib/p5/p5.min.js', // P5.js core only
             ];
 
             try {
@@ -54,11 +44,95 @@ const ManimVisualizer = ({ scriptContent }) => {
             if (scriptContent) {
                 console.log("ManimVisualizer: Original Script:", scriptContent);
 
+                // ====== CODE VALIDATION & AUTO-FIX ======
+                const validateAndFixManimCode = (code) => {
+                    let fixed = code;
+                    const warnings = [];
+
+                    // 1. Remove ALL comments (most critical fix)
+                    const commentsBefore = (fixed.match(/\/\/|\/\*/g) || []).length;
+                    fixed = fixed.replace(/\/\/.*$/gm, ''); // Single-line comments
+                    fixed = fixed.replace(/\/\*[\s\S]*?\*\//g, ''); // Multi-line comments
+                    if (commentsBefore > 0) {
+                        warnings.push(`⚠️  Removed ${commentsBefore} comment(s) - comments break script execution`);
+                    }
+
+                    // 2. Balance braces
+                    const openBraces = (fixed.match(/\{/g) || []).length;
+                    const closeBraces = (fixed.match(/\}/g) || []).length;
+                    if (openBraces > closeBraces) {
+                        const missing = openBraces - closeBraces;
+                        fixed += '\n}'.repeat(missing);
+                        warnings.push(`⚠️  Added ${missing} missing closing brace(s)`);
+                    } else if (closeBraces > openBraces) {
+                        warnings.push(`❌ More closing braces than opening ones - code may be malformed`);
+                    }
+
+                    // 3. Balance parentheses
+                    const openParens = (fixed.match(/\(/g) || []).length;
+                    const closeParens = (fixed.match(/\)/g) || []).length;
+                    if (openParens !== closeParens) {
+                        warnings.push(`❌ Unbalanced parentheses: ${openParens} open, ${closeParens} close`);
+                    }
+
+                    // 4. Check setup() and draw() exist (ONLY for non-Scene patterns)
+                    const hasScenePattern = fixed.includes('const Scene =') || fixed.includes('let Scene =') || fixed.includes('var Scene =');
+
+                    if (!hasScenePattern) {
+                        // Legacy P5.js global mode - needs global setup/draw
+                        if (!fixed.includes('function setup')) {
+                            warnings.push(`❌ Missing setup() function - adding stub`);
+                            fixed = 'function setup() { createCanvas(800, 450); }\n' + fixed;
+                        }
+                        if (!fixed.includes('function draw')) {
+                            warnings.push(`❌ Missing draw() function - adding stub`);
+                            fixed += '\nfunction draw() { background(0); }';
+                        }
+                    } else {
+                        // Manim.js Scene pattern - verify s.setup and s.draw exist
+                        if (!fixed.includes('s.setup =')) {
+                            warnings.push(`❌ Scene missing s.setup - add: s.setup = function() {...}`);
+                        }
+                        if (!fixed.includes('s.draw =')) {
+                            warnings.push(`❌ Scene missing s.draw - add: s.draw = function() {...}`);
+                        }
+                    }
+
+                    // 5. Text collision detection & auto-fix
+                    const textMatches = [...fixed.matchAll(/text\([^,]+,\s*[^,]+,\s*(\d+)/g)];
+                    if (textMatches.length > 1) {
+                        const yCoords = textMatches.map(m => parseInt(m[1]));
+                        const uniqueYs = new Set(yCoords);
+                        if (uniqueYs.size < yCoords.length) {
+                            warnings.push(`⚠️  Text elements may overlap - auto-spacing with 40px gaps`);
+                            let yOffset = 50;
+                            fixed = fixed.replace(/text\(([^)]+)\)/g, (match) => {
+                                const result = match.replace(/,\s*\d+\s*\)/, `, ${yOffset})`);
+                                yOffset += 40;
+                                return result;
+                            });
+                        }
+                    }
+
+                    // 6. Log all warnings
+                    if (warnings.length > 0) {
+                        console.warn("🔧 Manim Code Auto-Fix Applied:");
+                        warnings.forEach(w => console.warn(w));
+                    } else {
+                        console.log("✅ Manim Code Validation Passed");
+                    }
+
+                    return fixed;
+                };
+
+                // Apply validation
+                let modifiedScript = validateAndFixManimCode(scriptContent);
+
                 // 1. Force Parenting & Sizing via Regex
                 // Replaces: createCanvas(w, h) OR s.createCanvas(w, h)
                 // With:    createCanvas(w, h).parent('manim-canvas-container')
                 // This ensures both Global Mode and Instance Mode (s.createCanvas) are parented correctly.
-                let modifiedScript = scriptContent.replace(
+                modifiedScript = modifiedScript.replace(
                     /createCanvas\s*\(([^)]+)\)/g,
                     "createCanvas($1).parent('manim-canvas-container')"
                 ).replace(/`/g, '\\`'); // Escape backticks to prevent template string breakage
@@ -67,53 +141,40 @@ const ManimVisualizer = ({ scriptContent }) => {
 
                 // Remove existing user script if any
                 const existingScript = document.getElementById('manim-user-script');
-                if (existingScript) existingScript.remove();
+                if (existingScript) {
+                    console.log("ManimVisualizer: Removing previous script...");
+                    existingScript.remove();
+                }
 
                 // Reset p5 instance if possible
-                if (window.remove) window.remove();
+                if (window.currentP5) {
+                    console.log("ManimVisualizer: Removing previous P5 instance...");
+                    window.currentP5.remove();
+                    window.currentP5 = null;
+                }
 
-                // Create the execution logic as a separate string to ensure separation
+                // Clear any previous Scene definition
+                if (typeof window.Scene !== 'undefined') {
+                    console.log("ManimVisualizer: Clearing previous Scene...");
+                    window.Scene = undefined;
+                }
+
+                // Create the execution logic
                 const executionLogic = `
-                    console.log("ManimVisualizer: Definition executed.");
-                    
-                    try {
-                        // 2. Execution Phase
-                        if (typeof RequestGeneration === 'function') {
-                            console.log("ManimVisualizer: Found RequestGeneration class. Launching P5 Instance Mode...");
-                            
-                            if (window.currentP5) {
-                              window.currentP5.remove();
-                            }
-
-                            window.currentP5 = new p5((s) => {
-                                let scene;
-                                s.setup = () => {
-                                    console.log("P5 Instance Setup");
-                                    try {
-                                        scene = new RequestGeneration(s);
-                                    } catch(e) {
-                                        console.error("Error creating RequestGeneration:", e);
-                                    }
-                                };
-                                s.draw = () => {
-                                    if (scene && scene.show) scene.show();
-                                    else if (scene && scene.draw) scene.draw();
-                                };
-                            }, 'manim-canvas-container');
-
-                        } else {
-                            // Fallback: Global Mode
-                            console.log("ManimVisualizer: No class found. Assuming Global Mode.");
-                            if (window.remove) window.remove();
-
-                            if (typeof setup === 'function') {
-                                console.log("ManimVisualizer: Found global setup(). Triggering P5...");
-                                new p5(); 
-                            }
+                    console.log("ManimVisualizer: Executing P5.js script...");
+                    setTimeout(() => {
+                        if (window.currentP5) {
+                            console.log("ManimVisualizer: Removing previous P5 instance...");
+                            window.currentP5.remove();
                         }
-                    } catch (e) {
-                        console.error("ManimVisualizer: Runtime Execution Error:", e);
-                    }
+                        
+                        if (typeof setup === 'function' && typeof draw === 'function') {
+                            console.log("ManimVisualizer: Found global setup/draw. Launching P5...");
+                            window.currentP5 = new p5();
+                        } else {
+                            console.error("ManimVisualizer: No setup() or draw() functions found.");
+                        }
+                    }, 100);
                 `;
 
                 // Combine strict processing: User Code + Newline + Logic

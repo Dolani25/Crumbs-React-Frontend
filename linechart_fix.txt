@@ -1,0 +1,9 @@
+// Fixed version with negative value support
+const yValues = data.map(d => d[yKey]);
+const yMin = d3.min(yValues);
+const yMax = d3.max(yValues);
+const yPadding = Math.max((yMax - yMin) * 0.1, 1);
+
+const y = d3.scaleLinear()
+    .domain([yMin - yPadding, yMax + yPadding])
+    .range([innerHeight, 0]);

@@ -6,7 +6,10 @@ const BarChart = ({ data, width, height, color = "#FE4F30" }) => {
 
     useEffect(() => {
         if (!data || data.length === 0 || !width || !height) return;
-
+        if (!data[0] || typeof data[0] !== 'object') {
+            console.error('BarChart: Invalid data format', data);
+            return;
+        }
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
 
@@ -25,8 +28,14 @@ const BarChart = ({ data, width, height, color = "#FE4F30" }) => {
             .range([0, innerWidth])
             .padding(0.3);
 
+        // Calculate min and max values with padding to support negative values
+        const yValues = data.map(d => d[yKey]);
+        const yMin = d3.min(yValues);
+        const yMax = d3.max(yValues);
+        const yPadding = Math.max((yMax - yMin) * 0.1, 1); // 10% padding, minimum 1
+
         const y = d3.scaleLinear()
-            .domain([0, d3.max(data, d => d[yKey]) * 1.1])
+            .domain([yMin - yPadding, yMax + yPadding])
             .range([innerHeight, 0]);
 
         // 3. Draw Chart Area

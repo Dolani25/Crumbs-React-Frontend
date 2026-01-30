@@ -4,7 +4,7 @@ import D3BarChart from './d3-charts/BarChart';
 import D3Treemap from './d3-charts/Treemap';
 import D3Sunburst from './d3-charts/Sunburst';
 
-const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey, dataKey }) => {
+const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey, dataKey, xLabel, yLabel }) => {
     const containerRef = useRef(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -44,7 +44,11 @@ const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey, 
             data: chartData,
             width,
             height,
-            color: "#FE4F30"
+            width,
+            height,
+            color: "#FE4F30",
+            xLabel,
+            yLabel
         };
 
         switch (type.toLowerCase()) {

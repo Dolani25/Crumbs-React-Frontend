@@ -677,6 +677,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
                 title={currentCrumb.tool.title}
                 xKey={currentCrumb.tool.xKey}
                 dataKey={currentCrumb.tool.dataKey}
+                xLabel={currentCrumb.tool.xLabel}
+                yLabel={currentCrumb.tool.yLabel}
               />
             )}
 

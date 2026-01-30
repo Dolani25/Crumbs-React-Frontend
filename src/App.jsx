@@ -582,6 +582,24 @@ function App() {
     }
   };
 
+
+  // Data Saver State (Local Preference)
+  const [dataSaver, setDataSaver] = useState(false);
+
+  useEffect(() => {
+    secureStorage.getItem('crumbs_data_saver').then(s => {
+      if (s !== null) setDataSaver(s);
+    });
+  }, []);
+
+  const toggleDataSaver = () => {
+    setDataSaver(prev => {
+      const newVal = !prev;
+      secureStorage.setItem('crumbs_data_saver', newVal);
+      return newVal;
+    });
+  };
+
   if (isLoading) return <div style={{ background: '#0f172a', height: '100vh' }}></div>;
 
   return (
@@ -612,13 +630,12 @@ function App() {
         <Route path="/activity" element={user ? <Activity /> : <Navigate to="/login" />} />
         <Route path="/library" element={user ? <Library /> : <Navigate to="/login" />} />
         <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
-        <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
         <Route path="/quiz" element={user ? <QuizDashboard courses={courses} handleAddXP={handleAddXP} /> : <Navigate to="/login" />} />
         <Route path="/feed" element={user ? <Feed /> : <Navigate to="/login" />} />
         <Route path="/bookmarks" element={user ? <Bookmarks /> : <Navigate to="/login" />} />
         <Route path="/pinned" element={user ? <Pinned /> : <Navigate to="/login" />} />
         <Route path="/about" element={user ? <About /> : <Navigate to="/login" />} />
-        <Route path="/settings" element={user ? <Settings user={user} toggleTheme={toggleTheme} currentTheme={theme} /> : <Navigate to="/login" />} />
+        <Route path="/settings" element={user ? <Settings user={user} toggleTheme={toggleTheme} currentTheme={theme} dataSaver={dataSaver} toggleDataSaver={toggleDataSaver} /> : <Navigate to="/login" />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

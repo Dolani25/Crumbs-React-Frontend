@@ -7,6 +7,11 @@ router.post('/generate', async (req, res) => {
     try {
         const { prompt, model, mimeType, puterToken, puterAppId } = req.body;
 
+        // Validation: Ensure inputs are strings if present to prevent Type Errors
+        if (puterToken && typeof puterToken !== 'string') return res.status(400).json({ error: "Invalid token format" });
+        if (puterAppId && typeof puterAppId !== 'string') return res.status(400).json({ error: "Invalid App ID format" });
+        if (prompt && typeof prompt !== 'string') return res.status(400).json({ error: "Invalid prompt format" });
+
         console.log(`📡 AI Proxy Request: Length ${prompt?.length}, Model ${model}`);
         console.log(`🔑 Tokens received: Token=${puterToken ? 'Yes (' + puterToken.length + ' chars)' : 'NO'}, AppID=${puterAppId ? 'Yes' : 'NO'}`);
 

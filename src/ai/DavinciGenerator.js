@@ -147,16 +147,27 @@ Remember to return ONLY valid JSON matching the schema.
         validatedLesson.crumbs = updatedCrumbs;
 
         // 6. Post-Process: Fetch Sketchfab 3D Models (if requested)
+        // 6. Post-Process: Fetch Sketchfab 3D Models (if requested)
         try {
-            const dataSavingMode = false; // TODO: Get from user settings
+            // Check Data Saver Mode (Default: false)
+            // Need to retrieve it from secureStorage (async), but secureStorage might not be imported.
+            // Assuming we pass it or read it here. Since secureStorage is in 'utils', we import it.
+            // Or better: read from localStorage directly for sync access if needed, or await secureStorage.
+            const dataSavingMode = (await import('../utils/secureStorage.js')).secureStorage.getItem('crumbs_data_saver');
+            const isSaverOn = await dataSavingMode; // Await the promise
+
 
             for (const crumb of validatedLesson.crumbs) {
                 if (crumb.tool?.type === 'model-viewer' && crumb.tool.data?.sketchfab) {
                     // Check data saving mode
-                    if (dataSavingMode) {
+                    if (isSaverOn) {
                         console.warn('⚠️ Sketchfab disabled by data saving mode - using AI fallback');
+                        // Preserve title from query
+                        if (crumb.tool.data.query) {
+                            crumb.tool.data.title = crumb.tool.data.title || crumb.tool.data.query.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                            delete crumb.tool.data.query;
+                        }
                         delete crumb.tool.data.sketchfab;
-                        delete crumb.tool.data.query;
                         // Convert to fallback procedural model
                         crumb.tool.data.shapes = [
                             { shape: 'box', args: [1, 1, 1], color: '#888' }
@@ -190,6 +201,8 @@ Remember to return ONLY valid JSON matching the schema.
                             };
                         } else {
                             console.warn(`⚠️ No Sketchfab models found for "${query}" - using AI fallback`);
+                            console.warn(`⚠️ No Sketchfab models found for "${query}" - using AI fallback`);
+                            crumb.tool.data.title = query.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                             delete crumb.tool.data.sketchfab;
                             // Only overwrite shapes if none were provided by AI
                             if (!crumb.tool.data.shapes || crumb.tool.data.shapes.length === 0) {
@@ -201,7 +214,9 @@ Remember to return ONLY valid JSON matching the schema.
                         }
                     } catch (error) {
                         console.error(`❌ Sketchfab fetch failed for "${query}":`, error);
+                        console.error(`❌ Sketchfab fetch failed for "${query}":`, error);
                         // Fallback to procedural
+                        crumb.tool.data.title = query.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                         delete crumb.tool.data.sketchfab;
                         if (!crumb.tool.data.shapes || crumb.tool.data.shapes.length === 0) {
                             crumb.tool.data.shapes = [

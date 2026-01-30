@@ -5,6 +5,14 @@ const path = require('path');
 const fs = require('fs');
 const User = require('../models/User');
 const auth = require('../middleware/auth'); // Assuming you have auth middleware
+const rateLimit = require('express-rate-limit');
+
+// Strict Rate Limiting for File Operations (20 reqs/15min)
+const fileLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: { msg: 'Too many file operations, please try again later.' }
+});
 
 // Configure Multer Storage
 const storage = multer.diskStorage({
@@ -45,7 +53,7 @@ const upload = multer({
 // @route   POST api/library/upload
 // @desc    Upload a file to user library
 // @access  Private
-router.post('/upload', auth, upload.single('file'), async (req, res) => {
+router.post('/upload', auth, fileLimiter, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ msg: 'No file uploaded' });
@@ -93,7 +101,7 @@ router.get('/', auth, async (req, res) => {
 // @route   DELETE api/library/:id
 // @desc    Delete a file
 // @access  Private
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, fileLimiter, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         const fileIndex = user.library.findIndex(f => f._id.toString() === req.params.id);

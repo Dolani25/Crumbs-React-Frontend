@@ -12,7 +12,7 @@ const auth = (req, res, next) => {
 
     // Verify token
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_crumbs_key_dev');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded.user;
         next();
     } catch (err) {

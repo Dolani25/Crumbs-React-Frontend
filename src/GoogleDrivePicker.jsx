@@ -3,9 +3,9 @@ import './UploadFile.css'; // Reusing some styles or create new ones
 // import driveIcon from './assets/google-drive.png'; // Removed missing asset
 
 // Placeholders - USER/DEVELOPER must fill these
-const DEVELOPER_KEY = 'AIzaSyCHWsOzcNX8FfR25xenb3XQMG-X65W75yA';
-const CLIENT_ID = '541014598474-38hqmv8ham4suipdflhn1v4fasg73isb.apps.googleusercontent.com';
-const APP_ID = 'crumbs-485020';
+const DEVELOPER_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const APP_ID = import.meta.env.VITE_GOOGLE_APP_ID;
 
 // Scopes for the picker to access files
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file';

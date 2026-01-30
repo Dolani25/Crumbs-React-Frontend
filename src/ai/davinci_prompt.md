@@ -71,9 +71,10 @@ You have access to the following tools. Attach them in the `tool` property of th
 2.  **`graph-viewer`**: For Statistics/Trends.
     - **CRITICAL**: `data` MUST be a valid array with at least 3 data points
     - **CRITICAL**: Each object MUST have both name/label AND value fields
+    - **CRITICAL**: You MUST provide `title` (e.g. "Population Growth"), `xLabel` (e.g. "Year") and `yLabel` (e.g. "Population")
     - **NEVER** use empty arrays or placeholder data
     - `chartType` = 'line' | 'bar' | 'area'
-    - Example: `{ "type": "graph-viewer", "data": [{"year": "2020", "value": 45}, {"year": "2021", "value": 62}, {"year": "2022", "value": 78}], "chartType": "line" }`
+    - Example: `{ "type": "graph-viewer", "title": "Revenue Trend", "data": [{"year": "2020", "value": 45}, {"year": "2021", "value": 62}], "chartType": "line", "xLabel": "Year", "yLabel": "Revenue ($M)" }`
 3.  **`desmos-grapher`**: For Math/Calculus. `data` = equation string.
     - **Format**: Use standard Desmos/LaTeX syntax (e.g., `y = x^2`, `y = \\sin(x)`, `x^2 + y^2 = 10`).
     - **CRITICAL**: Ensure all parentheses are balanced. **STRICT LATEX ONLY**.

@@ -43,7 +43,7 @@ router.post('/signup', async (req, res) => {
 
         jwt.sign(
             payload,
-            process.env.JWT_SECRET || 'secret_crumbs_key_dev',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }, // 1 week session
             (err, token) => {
                 if (err) throw err;
@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
 
         jwt.sign(
             payload,
-            process.env.JWT_SECRET || 'secret_crumbs_key_dev',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' },
             (err, token) => {
                 if (err) throw err;
@@ -143,7 +143,7 @@ router.post('/google', async (req, res) => {
 
         jwt.sign(
             payload,
-            process.env.JWT_SECRET || 'secret_crumbs_key_dev',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' },
             (err, token) => {
                 if (err) throw err;

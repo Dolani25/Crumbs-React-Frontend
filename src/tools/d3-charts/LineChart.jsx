@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const LineChart = ({ data, width, height, color = "#FE4F30" }) => {
+const LineChart = ({ data, width, height, color = "#FE4F30", xLabel, yLabel }) => {
     const svgRef = useRef(null);
 
     useEffect(() => {
@@ -14,7 +14,7 @@ const LineChart = ({ data, width, height, color = "#FE4F30" }) => {
         svg.selectAll("*").remove();
 
         // 1. Setup Dimensions
-        const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+        const margin = { top: 20, right: 30, bottom: 50, left: 60 };
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
 
@@ -55,7 +55,35 @@ const LineChart = ({ data, width, height, color = "#FE4F30" }) => {
 
         g.append("g")
             .call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(10))
+            .call(d3.axisLeft(y).ticks(5).tickSize(0).tickPadding(10))
             .select(".domain").remove(); // Hide Y axis line
+
+        // X Axis Label
+        if (xLabel) {
+            svg.append("text")
+                .attr("class", "x-label")
+                .attr("text-anchor", "middle")
+                .attr("x", width / 2)
+                .attr("y", height - 5) // Position at bottom
+                .style("font-family", "Inter, sans-serif")
+                .style("font-size", "12px")
+                .style("fill", "#666")
+                .text(xLabel);
+        }
+
+        // Y Axis Label
+        if (yLabel) {
+            svg.append("text")
+                .attr("class", "y-label")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", 15) // Position at left
+                .style("font-family", "Inter, sans-serif")
+                .style("font-size", "12px")
+                .style("fill", "#666")
+                .text(yLabel);
+        }
 
         // Style Text
         g.selectAll("text")

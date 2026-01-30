@@ -41,7 +41,7 @@ const ModelViewer = ({ type, data, title }) => {
                 top: '20px',
                 left: '20px',
                 zIndex: 40, // Higher than Sketchfab iframe
-                display: 'flex',
+
                 flexDirection: 'column',
                 gap: '5px',
                 pointerEvents: 'none', // Click through to canvas

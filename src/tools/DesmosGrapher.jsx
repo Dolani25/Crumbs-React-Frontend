@@ -60,7 +60,7 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
             if (!document.getElementById('desmos-script')) {
                 const script = document.createElement('script');
                 script.id = 'desmos-script';
-                script.src = "https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6";
+                script.src = `https://www.desmos.com/api/v1.10/calculator.js?apiKey=${import.meta.env.VITE_DESMOS_API_KEY}`;
                 script.async = true;
                 script.onload = () => {
                     if (mounted) initCalculator();

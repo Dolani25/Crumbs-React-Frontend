@@ -21,6 +21,9 @@ import * as THREE from "three";
 
 // Update ModelViewer to use Renderer
 const ModelViewer = ({ type, data, title }) => {
+    // Check if we are in Sketchfab Mode
+    const isSketchfab = data?.url && data.url.includes('sketchfab.com');
+
     return (
         <div className="model-viewer-container" style={{
             width: '100%',
@@ -37,10 +40,12 @@ const ModelViewer = ({ type, data, title }) => {
                 position: 'absolute',
                 top: '20px',
                 left: '20px',
-                zIndex: 10,
+                zIndex: 40, // Higher than Sketchfab iframe
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '5px'
+                gap: '5px',
+                pointerEvents: 'none', // Click through to canvas
+                display: isSketchfab ? 'none' : 'flex'
             }}>
                 <div style={{
                     background: 'rgba(0,0,0,0.6)',
@@ -55,28 +60,66 @@ const ModelViewer = ({ type, data, title }) => {
                     alignItems: 'center',
                     gap: '8px'
                 }}>
-                    <div style={{ width: '8px', height: '8px', background: '#22c55e', borderRadius: '50%' }}></div>
-                    {title || "3D Interactive Model"}
+                    <div style={{ width: '8px', height: '8px', background: data?.url ? '#3b82f6' : '#22c55e', borderRadius: '50%' }}></div>
+                    {/* Priority: data.attribution (Sketchfab) -> data.title -> title prop -> Preset Name -> Generic */}
+                    {data?.attribution || data?.title || title || data?.preset?.replace(/_/g, ' ') || type || "3D Interactive Model"}
                 </div>
                 <div style={{
-                    background: 'rgba(59, 130, 246, 0.2)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    background: data?.url ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                    border: data?.url ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.3)',
                     padding: '4px 8px',
                     borderRadius: '6px',
-                    color: '#93c5fd',
+                    color: data?.url ? '#93c5fd' : '#6ee7b7',
                     fontSize: '0.7rem',
                     fontFamily: 'monospace',
-                    width: 'fit-content'
+                    width: 'fit-content',
+                    textTransform: 'uppercase'
                 }}>
-                    MODE: PROCEDURAL_ENGINE
+                    MODE: {data?.url ? 'SKETCHFAB_ENGINE' : (data?.shapes ? 'PROCEDURAL_GEN' : 'PRESET_RENDERER')}
                 </div>
             </div>
 
-            <Renderer shadows dpr={[1, 2]}>
-                <PerspectiveCamera makeDefault position={[4, 4, 6]} fov={45} />
-                <OrbitControls minDistance={2} maxDistance={15} autoRotate autoRotateSpeed={0.5} />
-                <EngineeringScene type={type} data={data} />
-            </Renderer>
+            {isSketchfab ? (
+                // --- MODE B: SKETCHFAB (Pure HTML, No Canvas overhead) ---
+                <div style={{ width: '100%', height: '100%' }}>
+                    <iframe
+                        src={data.url}
+                        title="Sketchfab 3D Model"
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            border: 'none',
+                            background: 'transparent'
+                        }}
+                        allow="autoplay; fullscreen; xr-spatial-tracking"
+                        allowFullScreen
+                    />
+                    {/* Attribution Overlay */}
+                    {(data.attribution || data.source) && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            left: '10px',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: 'white',
+                            padding: '5px 10px',
+                            borderRadius: '5px',
+                            fontSize: '0.75rem',
+                            pointerEvents: 'none',
+                            zIndex: 40
+                        }}>
+                            📦 {data.attribution || data.source}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                // --- MODE A: PROCEDURAL (WebGL Canvas) ---
+                <Renderer shadows dpr={[1, 2]}>
+                    <PerspectiveCamera makeDefault position={[4, 4, 6]} fov={45} />
+                    <OrbitControls minDistance={2} maxDistance={15} autoRotate autoRotateSpeed={0.5} />
+                    <EngineeringScene type={type} data={data} />
+                </Renderer>
+            )}
         </div>
     );
 };

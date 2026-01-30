@@ -1,41 +1,150 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Trash2, MoreVertical, FileText, Upload, CheckCircle, RotateCcw, Globe } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import './Course.css'
 
-const Course = ({ course, onDelete }) => {
+const Course = ({ course, onDelete, onReset }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleAction = (action, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowMenu(false);
+
+    if (action === 'delete') {
+      if (onDelete) onDelete(course.id || course._id);
+    } else if (action === 'publish') {
+      alert(`Published "${course.title || course.name}" to the global library! 🌍`);
+    } else if (action === 'select') {
+      alert(`Selected "${course.title || course.name}" ✅`);
+    } else if (action === 'reset') {
+      if (onReset) onReset(course.id || course._id);
+    }
+  };
+
   return (
     <div style={{ position: 'relative', height: '100%' }}>
+      {/* Menu Trigger */}
       <button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (onDelete) onDelete(course.id || course._id);
+          setShowMenu(!showMenu);
         }}
         style={{
           position: 'absolute',
           top: '10px',
           right: '8px',
-          background: 'transparent',
-          border: 'none',
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(255,255,255,0.1)',
           padding: '4px',
-          color: '#ef4444', // Red-500
+          color: 'white',
           cursor: 'pointer',
-          zIndex: 10,
+          zIndex: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: 0.8,
-          transition: 'opacity 0.2s',
-          borderRadius: '50%'
+          borderRadius: '50%',
+          transition: 'all 0.2s',
+          width: '28px',
+          height: '28px'
         }}
-        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.8'}
-        title="Delete Course"
+        className="course-action-btn"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '22px', height: '22px' }}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-        </svg>
+        <MoreVertical size={16} />
       </button>
+
+      {/* Action Menu Information Modal/Dropdown */}
+      {showMenu && (
+        <div
+          ref={menuRef}
+          style={{
+            position: 'absolute',
+            top: '40px',
+            right: '10px',
+            background: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '8px',
+            zIndex: 30,
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            width: '120px',
+            overflow: 'hidden'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => handleAction('select', e)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', background: 'transparent', border: 'none',
+              color: '#e2e8f0', cursor: 'pointer', fontSize: '0.85rem',
+              textAlign: 'left'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <CheckCircle size={14} style={{ color: '#4ade80' }} /> Select
+          </button>
+          <button
+            onClick={(e) => handleAction('publish', e)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', background: 'transparent', border: 'none',
+              color: '#e2e8f0', cursor: 'pointer', fontSize: '0.85rem',
+              textAlign: 'left'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <Globe size={14} style={{ color: '#60a5fa' }} /> Publish
+          </button>
+
+          <button
+            onClick={(e) => handleAction('reset', e)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', background: 'transparent', border: 'none',
+              color: '#fbbf24', cursor: 'pointer', fontSize: '0.85rem',
+              textAlign: 'left'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#334155'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <RotateCcw size={14} style={{ color: '#fbbf24' }} /> Reset Course
+          </button>
+
+          <div style={{ height: '1px', background: '#334155', margin: '2px 0' }}></div>
+          <button
+            onClick={(e) => handleAction('delete', e)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', background: 'transparent', border: 'none',
+              color: '#f87171', cursor: 'pointer', fontSize: '0.85rem',
+              textAlign: 'left'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+      )}
 
       <Link
         to={`/course/module/${course.id || course._id}`}

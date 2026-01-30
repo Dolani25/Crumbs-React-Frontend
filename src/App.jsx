@@ -290,6 +290,47 @@ function App() {
     }
   };
 
+  const handleResetCourse = async (courseId) => {
+    if (!window.confirm("Are you sure you want to reset this course? All generated lessons and progress will be lost permanently.")) return;
+
+    setCourses(prevCourses => {
+      const updatedCourses = prevCourses.map(course => {
+        if (course.id == courseId || course._id == courseId) {
+          // Reset logic: Clear progress and lesson content
+          let newCourse = { ...course, progress: 0, updatedAt: new Date().toISOString() };
+
+          // Reset Subtopics (Flat)
+          if (newCourse.subtopics) {
+            newCourse.subtopics = newCourse.subtopics.map(sub => ({
+              ...sub,
+              lesson: null,
+              isCompleted: false
+            }));
+          }
+
+          // Reset Topics (Nested)
+          if (newCourse.topics) {
+            newCourse.topics = newCourse.topics.map(topic => ({
+              ...topic,
+              subtopics: (topic.subtopics || []).map(sub => ({
+                ...sub,
+                lesson: null,
+                isCompleted: false
+              }))
+            }));
+          }
+
+          return newCourse;
+        }
+        return course;
+      });
+
+      secureStorage.setItem('crumbs_courses', updatedCourses);
+      setIsDirty(true); // Trigger Cloud Sync
+      return updatedCourses;
+    });
+  };
+
   // Persist generated lesson content
   // Persist generated lesson content
   const handleLessonSave = async (courseId, subtopicId, lessonContent) => {
@@ -559,7 +600,7 @@ function App() {
 
         {/* Private / App Routes */}
         <Route path="/dashboard" element={
-          user ? <Dashboard courses={courses} onUploadComplete={handleCourseUpload} onDelete={handleDeleteCourse} /> : <Navigate to="/login" />
+          user ? <Dashboard courses={courses} onUploadComplete={handleCourseUpload} onDelete={handleDeleteCourse} onReset={handleResetCourse} /> : <Navigate to="/login" />
         } />
 
         <Route path="/course/module/:id" element={user ? <Module courses={courses} /> : <Navigate to="/login" />} />
@@ -571,7 +612,8 @@ function App() {
         <Route path="/activity" element={user ? <Activity /> : <Navigate to="/login" />} />
         <Route path="/library" element={user ? <Library /> : <Navigate to="/login" />} />
         <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
-        <Route path="/quiz" element={user ? <QuizDashboard /> : <Navigate to="/login" />} />
+        <Route path="/chat" element={user ? <Chat /> : <Navigate to="/login" />} />
+        <Route path="/quiz" element={user ? <QuizDashboard courses={courses} handleAddXP={handleAddXP} /> : <Navigate to="/login" />} />
         <Route path="/feed" element={user ? <Feed /> : <Navigate to="/login" />} />
         <Route path="/bookmarks" element={user ? <Bookmarks /> : <Navigate to="/login" />} />
         <Route path="/pinned" element={user ? <Pinned /> : <Navigate to="/login" />} />

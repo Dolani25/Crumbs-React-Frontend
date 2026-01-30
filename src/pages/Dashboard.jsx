@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Course from '../Course.jsx';
 import CourseUploader from '../CourseUploader.jsx';
 
-const Dashboard = ({ courses, onUploadComplete, onDelete }) => {
+const Dashboard = ({ courses, onUploadComplete, onDelete, onReset }) => {
     const [showUploader, setShowUploader] = useState(false);
 
     // Remove any ghost/empty courses
@@ -14,7 +14,7 @@ const Dashboard = ({ courses, onUploadComplete, onDelete }) => {
             {validCourses.length > 0 ? (
                 <>
                     {validCourses.map(course => (
-                        <Course key={course.id || course._id} course={course} onDelete={onDelete} />
+                        <Course key={course.id || course._id} course={course} onDelete={onDelete} onReset={onReset} />
                     ))}
 
                     {/* Floating Add Button */}

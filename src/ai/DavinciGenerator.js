@@ -25,7 +25,40 @@ Remember to return ONLY valid JSON matching the schema.
 
         // 3. Raw Response (Should be valid JSON now)
         const cleanJson = response.message.content;
-        const parsedData = JSON.parse(cleanJson);
+
+        // Helper: Aggressive JSON Repair
+        const repairJson = (str) => {
+            try {
+                // First pass: Standard parse
+                return JSON.parse(str);
+            } catch (e1) {
+                try {
+                    // Second pass: Remove Markdown code blocks
+                    let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
+                    return JSON.parse(clean);
+                } catch (e2) {
+                    try {
+                        // Third pass: Fix invalid escape sequences (e.g., \s, \c, \alpha in LaTeX)
+                        // This regex matches a backslash NOT followed by a valid JSON escape char (", \, /, b, f, n, r, t, u)
+                        // It replaces it with double backslash to escape it properly.
+                        console.warn("⚠️ JSON Parse failed. Attempting escape sequence repair...");
+                        let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
+                        // Regex explanation: Match \ that is NOT followed by ["\/bfnrtu]
+                        const repaired = clean.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                        return JSON.parse(repaired);
+                    } catch (e3) {
+                        // Fourth pass: Catch control characters in strings (newlines)
+                        console.warn("⚠️ Repair failed. Attempting control char repair...");
+                        let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
+                        // Replace unescaped newlines within the string (risky but helps)
+                        const repaired = clean.replace(/\n/g, "\\n").replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                        return JSON.parse(repaired);
+                    }
+                }
+            }
+        };
+
+        const parsedData = repairJson(cleanJson);
 
         // 4. Validate with Zod
         let validatedLesson = LessonSchema.parse(parsedData);
@@ -158,17 +191,24 @@ Remember to return ONLY valid JSON matching the schema.
                         } else {
                             console.warn(`⚠️ No Sketchfab models found for "${query}" - using AI fallback`);
                             delete crumb.tool.data.sketchfab;
-                            crumb.tool.data.shapes = [
-                                { shape: 'sphere', args: [1, 32, 16], color: '#4a90e2' }
-                            ];
+                            // Only overwrite shapes if none were provided by AI
+                            if (!crumb.tool.data.shapes || crumb.tool.data.shapes.length === 0) {
+                                crumb.tool.data.shapes = [
+                                    { shape: 'sphere', args: [1, 32, 16], color: '#4a90e2' },
+                                    { shape: 'label', text: 'Model Not Found', position: [0, 1.5, 0] }
+                                ];
+                            }
                         }
                     } catch (error) {
                         console.error(`❌ Sketchfab fetch failed for "${query}":`, error);
                         // Fallback to procedural
                         delete crumb.tool.data.sketchfab;
-                        crumb.tool.data.shapes = [
-                            { shape: 'sphere', args: [1, 32, 16], color: '#e74c3c' }
-                        ];
+                        if (!crumb.tool.data.shapes || crumb.tool.data.shapes.length === 0) {
+                            crumb.tool.data.shapes = [
+                                { shape: 'sphere', args: [1, 32, 16], color: '#e74c3c' },
+                                { shape: 'label', text: '3D Model Unavailable', position: [0, 1.5, 0] }
+                            ];
+                        }
                     }
                 }
             }

@@ -216,6 +216,11 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
   // Load lesson effect
   useEffect(() => {
     const loadLesson = async () => {
+      // Avoid resetting if we already have the correct lesson loaded
+      if (lesson && lesson.topic && lesson._subtopicId === subtopicId) {
+        return;
+      }
+
       setLesson(null);
       setCrumbIndex(0); // Reset crumb index on new lesson
       setShowQuiz(false); // Reset quiz state
@@ -229,7 +234,9 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
         rawData = staticData;
       } else {
         // 2. Dynamic Lookup (Parsed Courses)
-        const course = (courses || []).find(c => c.id == courseId || c._id == courseId);
+        if (!courses || courses.length === 0) return; // Wait for courses to load
+
+        const course = courses.find(c => c.id == courseId || c._id == courseId);
         if (course) {
           // Normalize subtopics (Backend 'topics' vs Local 'subtopics')
           let allSubtopics = course.subtopics || [];
@@ -242,17 +249,18 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           // CHECK CACHE FIRST (Only if not retrying)
           if (subtopic && subtopic.lesson && retryCount === 0) {
             console.log("Loading lesson from cache...");
-            setLesson(subtopic.lesson);
+            setLesson({ ...subtopic.lesson, _subtopicId: subtopicId });
             return;
           }
 
           if (subtopic) {
             try {
+              // Double check we haven't unmounted or switched topics
               rawData = await generateCrumb(course.title || course.name, subtopic.title);
             } catch (err) {
               console.error("Davinci failed:", err);
               // Set Error State
-              setLesson({ isError: true, errorMessage: err.message || "Failed to generate lesson." });
+              setLesson({ isError: true, errorMessage: err.message || "Failed to generate lesson.", _subtopicId: subtopicId });
               return;
             }
           }
@@ -265,7 +273,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           title: "Not Found",
           topic: "Unknown Topic",
           lessonNumber: "404",
-          content: { text: ["Sorry, we couldn't find this lesson."] }
+          content: { text: ["Sorry, we couldn't find this lesson."] },
+          _subtopicId: subtopicId
         });
         return;
       }
@@ -298,7 +307,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
         }
       }
 
-      const finalLesson = { ...rawData, crumbs: normalizedCrumbs };
+      const finalLesson = { ...rawData, crumbs: normalizedCrumbs, _subtopicId: subtopicId };
       setLesson(finalLesson);
 
       // Save to Cache (Only if successful and not static)

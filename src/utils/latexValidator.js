@@ -11,19 +11,20 @@ export const validateDesmosExpression = (expression) => {
     // 1. Trim whitespace
     let expr = expression.trim();
 
-    // 2. Ensure backslashes are doubled (for JSON safety)
-    // If already has double backslashes, don't double again
-    // Check if expression has LaTeX commands (contains \ followed by letter)
-    const hasLatex = /\\[a-zA-Z]+/.test(expr);
+    // 2. Ensure backslashes are NOT doubled (Desmos expects single backslash for commands)
+    // Removed faulty logic that doubled backslashes here.
+    // We assume JSON.parse handles the initial escape.
 
-    if (hasLatex) {
-        // Replace single backslash with double backslash ONLY if not already doubled
-        expr = expr.replace(/([^\\])\\([a-zA-Z])/g, '$1\\\\$2');
-        expr = expr.replace(/^\\([a-zA-Z])/g, '\\\\$1'); // Handle start of string
-    }
-
-    // 3. Common fixes for AI-generated expressions
+    // 3. Common fixes for AI-generated expressions (Text -> LaTeX)
     expr = expr
+        // Functions that need backslash
+        .replace(/(^|[^\\])\b(sin|cos|tan|log|ln)(?![a-zA-Z])/g, '$1\\$2')
+        // sqrt() needs braces: sqrt(x) -> \sqrt{x}
+        // Simple regex for non-nested parens first
+        .replace(/(^|[^\\])\bsqrt\(([^)]+)\)/g, '$1\\sqrt{$2}')
+        // Greek letters
+        .replace(/(^|[^\\])\b(pi|theta|alpha|beta|gamma|lambda|mu|sigma|phi|omega)\b/g, '$1\\$2')
+        // Explicit fixes for already-backslashed but malformed
         .replace(/\\sin\(/g, '\\sin(') // Ensure sin is recognized
         .replace(/\\cos\(/g, '\\cos(')
         .replace(/\\tan\(/g, '\\tan(')

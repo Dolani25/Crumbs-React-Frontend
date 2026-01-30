@@ -16,11 +16,13 @@ class SketchfabService {
         try {
             const params = {
                 q: query,
-                downloadable: options.downloadable !== false, // Default: only downloadable models
+                // downloadable: options.downloadable === true, // Fixed: Default to ALL models (view-only is fine for embeds)
                 type: 'models',
                 count: options.count || 5,
-                sort_by: options.sortBy || '-likeCount' // Most liked first
+                sort_by: options.sortBy || 'relevance' // Changed default to relevance for better keyword matching
             };
+
+            if (options.downloadable) params.downloadable = true;
 
             const response = await axios.get(`${this.baseUrl}/search`, {
                 params,

@@ -10,7 +10,6 @@ const FlowChart = ({ data, title }) => {
     // If AI provides simplified format, we might need to parse it.
 
     // Memoize nodes and edges to prevent invalidation
-    // Memoize nodes and edges to prevent invalidation
     // Validate that data.nodes and data.edges are actually arrays to prevent crashes
     const nodes = useMemo(() => {
         if (data?.nodes && Array.isArray(data.nodes)) return data.nodes;
@@ -36,8 +35,6 @@ const FlowChart = ({ data, title }) => {
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
-                    nodeTypes={nodeTypes}
-                    edgeTypes={edgeTypes}
                     fitView
                     attributionPosition="bottom-right"
                 >

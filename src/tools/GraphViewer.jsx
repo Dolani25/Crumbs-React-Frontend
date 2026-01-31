@@ -44,8 +44,6 @@ const GraphViewer = ({ type = "line", data, title = "Data Visualization", xKey, 
             data: chartData,
             width,
             height,
-            width,
-            height,
             color: "#FE4F30",
             xLabel,
             yLabel

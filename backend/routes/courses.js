@@ -20,6 +20,28 @@ router.get('/', async (req, res) => {
     }
 });
 
+// @route   GET api/courses/public
+// @desc    Get Public Feed (Community)
+// @access  Public
+router.get('/public', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        // Mock Mode Check
+        if (mongoose.connection.readyState === 0) {
+            return res.json([]);
+        }
+
+        const courses = await Course.find({ isPublic: true })
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .select('-topics'); // Lightweight feed (no heavy nested data)
+        res.json(courses);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   GET api/courses/:id
 // @desc    Get course by ID with full hierarchy
 // @access  Public (for now)
@@ -342,24 +364,7 @@ router.put('/publish/:id', auth, async (req, res) => {
     }
 });
 
-// Get Public Feed (Community)
-router.get('/public', async (req, res) => {
-    try {
-        // Mock Mode Check
-        if (mongoose.connection.readyState === 0) {
-            return res.json([]);
-        }
-
-        const courses = await Course.find({ isPublic: true })
-            .sort({ createdAt: -1 })
-            .limit(20)
-            .select('-topics'); // Lightweight feed (no heavy nested data)
-        res.json(courses);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
+// (Moved /public route to top to avoid collision with /:id)
 
 // Like/Unlike a Course
 router.put('/like/:id', auth, async (req, res) => {

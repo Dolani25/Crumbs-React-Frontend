@@ -16,6 +16,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import QuizView from './tools/QuizView.jsx';
 import ModelViewer from './tools/ModelViewer.jsx';
 
+
 import VolumeViewer from './tools/VolumeViewer'; // VTK.js Volume Tool
 import FlowChart from './tools/FlowChart'; // React Flow Process Tool
 import ManimVisualizer from './tools/ManimVisualizer'; // Manim-style P5 Tool
@@ -28,7 +29,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
   const [lesson, setLesson] = useState(null);
   const [crumbIndex, setCrumbIndex] = useState(0); // Track current crumb (paragraph)
   const [scrollValue, setScrollValue] = useState(0);
-  const [tooltipStyle, setTooltipStyle] = useState({ display: "none" });
+
+
   const [retryCount, setRetryCount] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -61,71 +63,112 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Text Selection / Tooltip
-  useEffect(() => {
-    let timeoutId;
+  const [activeSelection, setActiveSelection] = useState({
+    text: '',
+    range: null,
+    rect: null,
+    isActive: false
+  });
 
-    const handleSelection = () => {
-      // Debounce logic to wait for selection to settle (especially on mobile)
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
+  // Native Selection Logic with `selectionchange` handling
+  useEffect(() => {
+    let selectionTimeout;
+
+    const handleSelectionChange = () => {
+      clearTimeout(selectionTimeout);
+
+      // Debounce: 200ms
+      selectionTimeout = setTimeout(() => {
         const selection = window.getSelection();
 
-        // If no valid selection, hide
-        if (!selection || selection.rangeCount === 0 || selection.isCollapsed || !selection.toString().trim()) {
-          setTooltipStyle({ display: "none" });
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+          // Clear if nothing selected
+          if (!selection || !selection.toString().trim()) {
+            setActiveSelection(prev => prev.isActive ? { ...prev, isActive: false } : prev);
+          }
           return;
         }
 
         const text = selection.toString().trim();
-        if (text.length > 0) {
-          const range = selection.getRangeAt(0);
+        if (!text) {
+          setActiveSelection(prev => prev.isActive ? { ...prev, isActive: false } : prev);
+          return;
+        }
+
+        // Robust Content Check
+        // Sometimes anchor/focus are text nodes, sometimes elements.
+        const anchor = selection.anchorNode;
+        const focus = selection.focusNode;
+        const range = selection.getRangeAt(0);
+
+        let validContainer = false;
+
+        // generated selection often has commonAncestorContainer as the wrapper
+        if (range.commonAncestorContainer) {
+          const container = range.commonAncestorContainer.nodeType === 3
+            ? range.commonAncestorContainer.parentNode
+            : range.commonAncestorContainer;
+          if (container.closest('.nnote')) validContainer = true;
+        }
+
+        // If common ancestor check failed (rare), check nodes
+        if (!validContainer && anchor && focus) {
+          const anchorEl = anchor.nodeType === 3 ? anchor.parentNode : anchor;
+          const focusEl = focus.nodeType === 3 ? focus.parentNode : focus;
+          if (anchorEl.closest('.nnote') || focusEl.closest('.nnote')) {
+            validContainer = true;
+          }
+        }
+
+        if (validContainer) {
+          // Force layout read
           const rect = range.getBoundingClientRect();
 
-          // Calculate tooltip position
-          // On mobile, native menu might appear, so we position it slightly higher
-          const top = rect.top + window.scrollY - 60;
-          const left = rect.left + window.scrollX + (rect.width / 2);
-
-          setTooltipStyle({
-            display: "flex",
-            top: `${top}px`,
-            left: `${left}px`,
-            transform: 'translateX(-50%)',
-            position: 'absolute',
-            zIndex: 99999 // Force super high z-index
-          });
+          // Only update if dimensions are valid
+          if (rect.width > 0 || rect.height > 0) {
+            setActiveSelection({
+              text: text,
+              range: range.cloneRange(),
+              rect: rect,
+              isActive: true
+            });
+          }
+        } else {
+          // Outside reader
+          setActiveSelection(prev => prev.isActive ? { ...prev, isActive: false } : prev);
         }
-      }, 200); // 200ms debounce
+      }, 200);
     };
 
-    // Hybrid Listeners
-    // 1. selectionchange: Catches everything but can be noisy (handled by debounce)
-    document.addEventListener("selectionchange", handleSelection);
+    const handleInteract = (e) => {
+      if (e.target.closest('.selection-toolbar')) return;
+      handleSelectionChange(); // Check soon
+    };
 
-    // 2. Touchend: Critical for Mobile
-    document.addEventListener("touchend", handleSelection);
+    // Touch End: Mobile selection often finalizes here
+    const handleTouchEnd = () => {
+      // Check multiple times? No, just one check with enough delay
+      setTimeout(handleSelectionChange, 100);
+    };
 
-    // 3. Mouseup/Keyup: standard desktop
-    document.addEventListener("mouseup", handleSelection);
-    document.addEventListener("keyup", handleSelection);
+    // Explicitly hide context menu
+    const preventContextMenu = (e) => {
+      if (e.target.closest('.nnote')) {
+        e.preventDefault();
+      }
+    };
 
-    // Clear on mousedown (starting new selection)
-    const hideTooltip = () => {
-      clearTimeout(timeoutId);
-      setTooltipStyle({ display: "none" });
-    }
-    document.addEventListener("mousedown", hideTooltip);
-    document.addEventListener("touchstart", hideTooltip);
+    document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("mousedown", handleInteract);
+    document.addEventListener("touchend", handleTouchEnd);
+    document.addEventListener("contextmenu", preventContextMenu);
 
     return () => {
-      document.removeEventListener("selectionchange", handleSelection);
-      document.removeEventListener("touchend", handleSelection);
-      document.removeEventListener("mouseup", handleSelection);
-      document.removeEventListener("keyup", handleSelection);
-      document.removeEventListener("mousedown", hideTooltip);
-      document.removeEventListener("touchstart", hideTooltip);
-      clearTimeout(timeoutId);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+      document.removeEventListener("mousedown", handleInteract);
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("contextmenu", preventContextMenu);
+      clearTimeout(selectionTimeout);
     };
   }, []);
 
@@ -149,28 +192,53 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
     }
   };
 
+  const [explainModal, setExplainModal] = useState({ show: false, text: '', explanation: '', loading: false });
+
+
+
   const handleExplain = async () => {
-    const selection = window.getSelection();
-    if (!selection) return;
-    const text = selection.toString().trim();
+    // legacy direct check or state check
+    const text = activeSelection.text || window.getSelection().toString();
     if (!text) return;
+
+    // Show modal immediately with loading state
+    setExplainModal({ show: true, text: text, explanation: '', loading: true });
 
     try {
       const prompt = `Explain this concept concisely for a student: "${text}"`;
-      // Quick "mini-crumb" generation
-      const explanation = await window.puter.ai.chat(prompt);
-      // Using confirm/alert is a temporary UX. Ideally we would support a modal.
-      // But for now, let's just use alert as requested by the "missing logic".
-      alert(`💡 Explain: ${text}\n\n${explanation}`);
+      const response = await window.puter.ai.chat(prompt);
+
+      // Handle various response formats from Puter AI
+      let textResponse = '';
+      if (typeof response === 'string') {
+        textResponse = response;
+      } else if (response?.message?.content) {
+        textResponse = response.message.content;
+      } else {
+        textResponse = String(response);
+      }
+
+      setExplainModal(prev => ({ ...prev, explanation: textResponse, loading: false }));
     } catch (err) {
       console.error("Explain failed", err);
+      setExplainModal(prev => ({ ...prev, explanation: "Sorry, I couldn't explain that right now.", loading: false }));
+    }
+  };
+
+  const handleCopy = async () => {
+    const text = activeSelection.text || window.getSelection().toString();
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("Copied to clipboard");
+    } catch (err) {
+      console.error('Copy failed:', err);
     }
   };
 
   const handleDiscuss = () => {
-    const selection = window.getSelection();
-    if (!selection) return;
-    const text = selection.toString().trim();
+    const text = activeSelection.text || window.getSelection().toString();
     if (!text) return;
 
     setPostModal({
@@ -179,11 +247,10 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
         lineContent: text,
         courseId: courseId,
         courseTitle: lesson.title,
-        crumbId: lesson.topic // using topic as id roughly
+        crumbId: lesson.topic
       }
     });
-    // Hide tooltip
-    setTooltipStyle({ display: "none" });
+    // Optional: setActiveSelection(prev => ({ ...prev, isActive: false }));
   };
 
   const handlePostSubmit = async () => {
@@ -435,13 +502,32 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
   const currentCrumb = lesson.crumbs ? lesson.crumbs[crumbIndex] : {};
   const isLastCrumb = lesson.crumbs && crumbIndex === lesson.crumbs.length - 1;
 
-  // Helper to parse text with inline math ($...$) and bold (**...**)
+  // Helper to parse text with inline math ($...$) and bold (**...**) 
   const renderTextWithMath = (input) => {
     if (!input) return null;
     const text = String(input); // Force string conversion
 
+    // 0a. Clean up escaped LaTeX delimiters (\\), \\(, etc. that got mangled)
+    // Remove escaped backslashes before delimiters
+    let cleanedText = text.replace(/\\\\([()$])/g, '$1'); // \\) → ), \\( → (, \\$ → $
+    cleanedText = cleanedText.replace(/\\([()])/g, ''); // \) → (empty), \( → (empty)
+
+    // 0b. Clean up chemistry LaTeX commands (mhchem package)
+    // Remove \ce{...}, \cee{...}, etc. and just show the formula
+    cleanedText = cleanedText.replace(/\\c[a-z]*\{([^}]+)\}/g, '$1');
+
+    // Also handle other common LaTeX commands that shouldn't render
+    cleanedText = cleanedText.replace(/\\text\{([^}]+)\}/g, '$1');
+    cleanedText = cleanedText.replace(/\\mathrm\{([^}]+)\}/g, '$1');
+
+    // Clean up stray \frac commands outside of math mode (causes red text)
+    // \frac{1}{d_o} → (1)/(d_o)
+    cleanedText = cleanedText.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)');
+    // Remove other common LaTeX commands if not in math mode
+    cleanedText = cleanedText.replace(/\\([a-z]+_[a-z])/g, '$1'); // \d_o → d_o
+
     // 1. Convert Markdown Bold to HTML Bold
-    const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    const formattedText = cleanedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
     // 2. Split by LaTeX delimiters ($...$)
     const parts = formattedText.split(/\$([^$]+)\$/g);
@@ -473,45 +559,10 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
 
   return (
     <div className="reader-rroot">
-      {/* Selection Tooltip */}
-      <div style={{
-        ...tooltipStyle,
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '8px',
-        padding: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-        zIndex: 1000,
-        gap: '8px',
-        alignItems: 'center'
-      }}>
-        <button
-          onClick={handleExplain}
-          style={{
-            border: 'none', background: 'transparent', cursor: 'pointer',
-            color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px',
-            fontSize: '0.9rem', fontWeight: 'bold'
-          }}
-        >
-          <i className="las la-brain" style={{ fontSize: '1.2rem', color: '#8b5cf6' }}></i>
-          Explain
-        </button>
-        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.2)' }}></div>
-        <button
-          onClick={handleDiscuss}
-          style={{
-            border: 'none', background: 'transparent', cursor: 'pointer',
-            color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px',
-            fontSize: '0.9rem', fontWeight: 'bold'
-          }}
-        >
-          <i className="las la-comment-alt" style={{ fontSize: '1.2rem', color: '#6366f1' }}></i>
-          Discuss
-        </button>
-      </div>
 
       {/* Lightbox Overlay */}
       {zoomedImage && (
+        // ... existing lightbox code ...
         <div
           style={{
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
@@ -539,6 +590,72 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
             style={{ maxWidth: '95%', maxHeight: '85%', borderRadius: '8px', boxShadow: '0 0 30px rgba(0,0,0,0.5)' }}
             onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
           />
+        </div>
+      )}
+
+      {/* Explain Modal */}
+      {explainModal.show && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.8)', zIndex: 10001,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(5px)'
+          }}
+          onClick={() => setExplainModal({ show: false, text: '', explanation: '', loading: false })}
+        >
+          <div
+            style={{
+              background: '#1e293b', padding: '25px', borderRadius: '16px', width: '90%', maxWidth: '500px',
+              border: '1px solid #334155', boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              maxHeight: '80vh', overflowY: 'auto', position: 'relative'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <i className="las la-brain" style={{ color: '#818cf8', fontSize: '1.5rem' }}></i>
+                AI Explanation
+              </h3>
+              <button
+                onClick={() => setExplainModal({ show: false, text: '', explanation: '', loading: false })}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '1.5rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '12px', borderRadius: '8px', marginBottom: '20px', borderLeft: '3px solid #6366f1' }}>
+              <p style={{ margin: 0, color: '#cbd5e1', fontStyle: 'italic', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                "{explainModal.text}"
+              </p>
+            </div>
+
+            {explainModal.loading ? (
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                <div className="loader-icon" style={{ width: '40px', height: '40px', marginBottom: 0 }}>
+                  <div className="ripple" style={{ borderColor: '#818cf8', animationDuration: '1.5s' }}></div>
+                  <i className="las la-spinner" style={{ fontSize: '2rem', color: '#818cf8', animation: 'spin 1s linear infinite' }}></i>
+                </div>
+                <p style={{ color: '#94a3b8', margin: 0 }}>Consulting the neural network...</p>
+              </div>
+            ) : (
+              <div style={{ lineHeight: '1.6', color: '#e2e8f0', fontSize: '1.05rem' }}>
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{explainModal.explanation}</p>
+              </div>
+            )}
+
+            {!explainModal.loading && (
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setExplainModal({ show: false, text: '', explanation: '', loading: false })}
+                  style={{ background: '#6366f1', border: 'none', color: 'white', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -592,8 +709,6 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           </div>
         </div>
       )}
-
-      {/* Header Section */}
       <div className="ffiltered-div">
         <div className="filtter"></div>
         <div className="content-wwrapper">
@@ -827,6 +942,36 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           {isLastCrumb ? (lesson.quiz ? "Take Quiz" : "Finish Topic") : "Next Crumb"}
         </div>
       </div>
+
+      {/* Native eBook/PDF Reader-style Text Selection */}
+      {/* Selection Toolbar */}
+      {activeSelection.isActive && activeSelection.rect && (
+        <div
+          className="selection-toolbar"
+          style={{
+            position: 'fixed',
+            top: `${Math.max(10, activeSelection.rect.top - 55)}px`,
+            // Smart clamping: Estimate toolbar width ~300px (half 150px)
+            // Ensure the center point we position at is at least 150px from edges
+            left: `${Math.max(150, Math.min(window.innerWidth - 150, activeSelection.rect.left + activeSelection.rect.width / 2))}px`,
+            transform: 'translateX(-50%)',
+            maxWidth: '95vw',
+            zIndex: 10000
+          }}
+        >
+          <button onClick={handleCopy} className="toolbar-btn">
+            <i className="las la-copy"></i> Copy
+          </button>
+          <div className="toolbar-divider"></div>
+          <button onClick={handleExplain} className="toolbar-btn">
+            <i className="las la-brain"></i> Explain
+          </button>
+          <div className="toolbar-divider"></div>
+          <button onClick={handleDiscuss} className="toolbar-btn">
+            <i className="las la-comment"></i> Discuss
+          </button>
+        </div>
+      )}
     </div>
   );
 };

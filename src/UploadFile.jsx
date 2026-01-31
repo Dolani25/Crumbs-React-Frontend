@@ -41,13 +41,23 @@ function UploadFile({ initialFile, onUploadComplete }) {
 
   const processFile = async (file, fileName) => {
     setStatusMessage("Reading PDF...");
+
     // Simulating upload progress
     let simulatedProgress = 0;
-    const progressInterval = setInterval(() => {
+    const intervalId = setInterval(() => {
+      // Check if unmounted
+      if (!fileInputRef.current) {
+        clearInterval(intervalId);
+        return;
+      }
+
       simulatedProgress += 5;
-      if (simulatedProgress > 90) clearInterval(progressInterval);
+      if (simulatedProgress > 90) clearInterval(intervalId);
       setProgress(Math.min(simulatedProgress, 90));
     }, 200);
+
+    // Track interval to clear on unmount (via ref if we had one, or just locally here is risky)
+    // Better: We need a useEffect cleanup for this, OR we check a 'mounted' ref.
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -57,15 +67,18 @@ function UploadFile({ initialFile, onUploadComplete }) {
       let fullText = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {
+        // Break if unmounted
+        if (!fileInputRef.current) break;
+
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map(item => item.str).join(' ');
         fullText += pageText + '\n';
-
-        // Progress update...
       }
 
-      clearInterval(progressInterval);
+      clearInterval(intervalId);
+      if (!fileInputRef.current) return;
+
       setProgress(95);
 
       // Attempt AI Parsing logic
@@ -78,6 +91,7 @@ function UploadFile({ initialFile, onUploadComplete }) {
 
       // Success UI update
       setTimeout(() => {
+        if (!fileInputRef.current) return;
         setUploadedFiles(prevFiles => [
           { name: fileName, size: fileSize },
           ...prevFiles
@@ -87,11 +101,13 @@ function UploadFile({ initialFile, onUploadComplete }) {
       }, 500);
 
     } catch (error) {
-      clearInterval(progressInterval);
+      clearInterval(intervalId);
       console.error("Error processing PDF:", error);
       alert("Failed to process PDF.");
-      setProgress(0);
-      setStatusMessage("");
+      if (fileInputRef.current) {
+        setProgress(0);
+        setStatusMessage("");
+      }
     }
   };
 

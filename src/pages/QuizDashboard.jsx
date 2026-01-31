@@ -55,6 +55,54 @@ const QuizDashboard = ({ courses = [], handleAddXP }) => {
     const [isAnswered, setIsAnswered] = useState(false);
     const [feedback, setFeedback] = useState(null); // 'correct' or 'incorrect'
 
+    // Topic Selection State
+    const [selectedSubtopicIds, setSelectedSubtopicIds] = useState([]);
+
+    const toggleSubtopic = (id) => {
+        setSelectedSubtopicIds(prev => {
+            if (prev.includes(id)) return prev.filter(i => i !== id);
+            return [...prev, id];
+        });
+    };
+
+    const modulesWithQuestions = React.useMemo(() => {
+        const modules = [];
+        courses.forEach(c => {
+            const courseTitle = c.title || c.name || "Untitled Course";
+            // Flat Subtopics
+            if (c.subtopics) {
+                c.subtopics.forEach(s => {
+                    if (s?.lesson?.quiz?.questions?.length > 0) {
+                        modules.push({
+                            id: s.id || s._id,
+                            title: s.title,
+                            course: courseTitle,
+                            qCount: s.lesson.quiz.questions.length
+                        });
+                    }
+                });
+            }
+            // Nested Topics
+            if (c.topics) {
+                c.topics.forEach(t => {
+                    if (t.subtopics) {
+                        t.subtopics.forEach(s => {
+                            if (s?.lesson?.quiz?.questions?.length > 0) {
+                                modules.push({
+                                    id: s.id || s._id,
+                                    title: `${t.title} - ${s.title}`,
+                                    course: courseTitle,
+                                    qCount: s.lesson.quiz.questions.length
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        return modules;
+    }, [courses]);
+
     // --- HELPER: Extract Questions from Courses ---
     const getAvailableQuestions = () => {
         const allQuestions = [];
@@ -65,7 +113,10 @@ const QuizDashboard = ({ courses = [], handleAddXP }) => {
             if (course.subtopics) {
                 course.subtopics.forEach(sub => {
                     if (sub?.lesson?.quiz?.questions?.length > 0) {
-                        allQuestions.push(...sub.lesson.quiz.questions);
+                        // Filter Check
+                        if (selectedSubtopicIds.length === 0 || selectedSubtopicIds.includes(sub.id || sub._id)) {
+                            allQuestions.push(...sub.lesson.quiz.questions);
+                        }
                     }
                 });
             }
@@ -75,7 +126,10 @@ const QuizDashboard = ({ courses = [], handleAddXP }) => {
                     if (topic.subtopics) {
                         topic.subtopics.forEach(sub => {
                             if (sub?.lesson?.quiz?.questions?.length > 0) {
-                                allQuestions.push(...sub.lesson.quiz.questions);
+                                // Filter Check
+                                if (selectedSubtopicIds.length === 0 || selectedSubtopicIds.includes(sub.id || sub._id)) {
+                                    allQuestions.push(...sub.lesson.quiz.questions);
+                                }
                             }
                         });
                     }
@@ -425,16 +479,70 @@ const QuizDashboard = ({ courses = [], handleAddXP }) => {
                         </button>
                     </div>
 
-                    {/* Topic Selection (Visual Placeholder) */}
-                    <div className="quiz-card" style={{ opacity: 0.7 }}>
+                    {/* Topic Selection */}
+                    <div className="quiz-card">
                         <div className="quick-play-header">
                             <BookOpen size={20} color="#10b981" />
                             <span>Topic Selection</span>
                         </div>
-                        <p style={{ fontSize: '0.9rem', color: '#94a3b8', textAlign: 'center', padding: '1rem 0' }}>
-                            Select specific modules from your active courses.
-                            <br /><span style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>(Coming Soon)</span>
-                        </p>
+
+                        <div style={{ maxHeight: '250px', overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }} className="custom-scroll">
+                            {modulesWithQuestions.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {modulesWithQuestions.map(m => {
+                                        const isSelected = selectedSubtopicIds.includes(m.id);
+                                        return (
+                                            <div
+                                                key={m.id}
+                                                onClick={() => toggleSubtopic(m.id)}
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                                    padding: '8px', borderRadius: '8px',
+                                                    background: isSelected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)',
+                                                    border: `1px solid ${isSelected ? '#10b981' : 'rgba(255,255,255,0.1)'}`,
+                                                    cursor: 'pointer', transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                <div style={{
+                                                    width: '18px', height: '18px', borderRadius: '4px',
+                                                    border: `2px solid ${isSelected ? '#10b981' : '#94a3b8'}`,
+                                                    background: isSelected ? '#10b981' : 'transparent',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    {isSelected && <CheckCircle size={12} color="white" />}
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '0.9rem', color: '#f1f5f9' }}>{m.title}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{m.course} • {m.qCount} Qs</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p style={{ fontSize: '0.9rem', color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>
+                                    No quizzes found in your courses yet.
+                                    <br /> Generate some lessons first!
+                                </p>
+                            )}
+                        </div>
+
+                        {modulesWithQuestions.length > 0 && (
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                                <button
+                                    onClick={() => setSelectedSubtopicIds(modulesWithQuestions.map(m => m.id))}
+                                    style={{ fontSize: '0.8rem', padding: '4px 8px', background: 'transparent', border: 'none', color: '#3b82f6', cursor: 'pointer' }}
+                                >
+                                    Select All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedSubtopicIds([])}
+                                    style={{ fontSize: '0.8rem', padding: '4px 8px', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                 </div>

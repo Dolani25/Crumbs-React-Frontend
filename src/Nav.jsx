@@ -64,7 +64,7 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
         {/* COG SVG */}
         {/* COG SVG (Settings) */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Link to="/settings" style={{ border: 'none', background: 'none' }}>
+          <Link to="/settings" onClick={closeNav} style={{ border: 'none', background: 'none' }}>
             <img style={{ marginTop: '-1em', cursor: 'pointer' }} src={Cog} alt="Settings" />
           </Link>
         </div>
@@ -115,41 +115,41 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
 
         <ul className="Btnlist">
           <li className="item" id="community">
-            <Link to="/profile" className="btn"><img src={Profile} />
+            <Link to="/profile" onClick={closeNav} className="btn"><img src={Profile} />
               Profile
             </Link>
           </li>
           <li className="item" id="earn">
-            <Link to="/activity" className="btn"><img src={Activity} />
+            <Link to="/activity" onClick={closeNav} className="btn"><img src={Activity} />
               Activity
             </Link>
           </li>
 
           <li className="item" id="wallet">
-            <Link to="/bookmarks" className="btn"><img src={Bookmark} />
+            <Link to="/bookmarks" onClick={closeNav} className="btn"><img src={Bookmark} />
               Bookmarks
             </Link>
           </li>
 
           <li className="item" id="trans">
-            <Link to="/pinned" className="btn"><img src={Pinned} />
+            <Link to="/pinned" onClick={closeNav} className="btn"><img src={Pinned} />
               Pinned
             </Link>
           </li>
 
           <li className="item" id="community">
-            <Link to="/community" className="btn"><img src={Near} />
+            <Link to="/community" onClick={closeNav} className="btn"><img src={Near} />
               Community
             </Link>
           </li>
 
           <li className="item" id="message">
-            <Link to="/planner" className="btn"><img src={Planner} />
+            <Link to="/planner" onClick={closeNav} className="btn"><img src={Planner} />
               Planner
             </Link>
           </li>
           <li className="item" id="about">
-            <Link to="/about" className="btn"><img src={About} />
+            <Link to="/about" onClick={closeNav} className="btn"><img src={About} />
               About
             </Link>
           </li>
@@ -160,14 +160,14 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
                 AI Connected
               </button>
             ) : (
-              <button onClick={() => window.puter?.auth?.signIn()} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}>
+              <button onClick={() => { window.puter?.auth?.signIn(); closeNav(); }} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}>
                 <img src={About} style={{ marginRight: '26px' }} />
                 Connect AI
               </button>
             )}
           </li>
           <li className="item" id="logout">
-            <button onClick={logout} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}><img src={Logout} style={{ marginRight: '26px' }} />
+            <button onClick={() => { logout(); closeNav(); }} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}><img src={Logout} style={{ marginRight: '26px' }} />
               Sign out
             </button>
           </li>

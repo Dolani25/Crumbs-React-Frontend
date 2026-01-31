@@ -1,5 +1,4 @@
 
-import { dummyCourses } from './dummyCourses.js';
 import { secureStorage } from './utils/secureStorage.js';
 
 const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
@@ -29,6 +28,16 @@ const api = {
         const token = await secureStorage.getItem('crumbs_token');
         const res = await fetch(`${API_URL}${url}`, {
             method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        return { data: await res.json() };
+    },
+    patch: async (url, body) => {
+        const token = await secureStorage.getItem('crumbs_token');
+        const res = await fetch(`${API_URL}${url}`, {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
             body: JSON.stringify(body)
         });
@@ -98,6 +107,26 @@ export const syncPlanner = async (plannerData) => {
 
 export const getPlanner = async () => {
     const res = await api.get('/auth/planner');
+    return res.data;
+};
+
+export const updatePlannerItem = async (planId, updates) => {
+    const res = await api.patch(`/auth/planner/${planId}`, updates);
+    return res.data;
+};
+
+export const togglePlanComplete = async (planId) => {
+    const res = await api.patch(`/auth/planner/${planId}/toggle`);
+    return res.data;
+};
+
+export const getNotificationPreferences = async () => {
+    const res = await api.get('/auth/notification-preferences');
+    return res.data;
+};
+
+export const updateNotificationPreferences = async (prefs) => {
+    const res = await api.put('/auth/notification-preferences', prefs);
     return res.data;
 };
 

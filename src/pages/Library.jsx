@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import './Planner.css'; // Reusing Planner CSS for consistency for now
-import { Upload, Trash2, FileText, File, CheckCircle, Circle } from 'lucide-react';
+import './Library.css'; // New Styles
+import { Upload, Trash2, FileText, File, CheckCircle, Image, HardDrive } from 'lucide-react';
 import axios from 'axios';
 
 const Library = () => {
@@ -101,17 +101,32 @@ const Library = () => {
     };
 
     return (
-        <div className="planner-page">
-            <div className="planner-header">
-                <h1>My Library 📚</h1>
-                <p style={{ color: '#94a3b8' }}>Upload files to personalize your AI lessons!</p>
+        <div className="library-page">
+            <div className="library-header">
+                <div>
+                    <h1>My Library 📚</h1>
+                    <p style={{ color: '#94a3b8', marginTop: '5px' }}>Upload files to personalize your AI lessons!</p>
+                </div>
+
+                {/* Simulated Storage Widget */}
+                <div className="storage-widget">
+                    <HardDrive size={20} color="#94a3b8" />
+                    <div>
+                        <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Storage</span>
+                            <span>{files.length * 2}% Used</span>
+                        </div>
+                        <div className="storage-bar-bg">
+                            <div className="storage-bar-fill" style={{ width: `${Math.min(files.length * 2, 100)}%` }}></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div className="planner-content" style={{ flexDirection: 'column', gap: '40px' }}>
+            <div className="library-content">
                 {/* Upload Zone */}
-                <form
-                    className="planner-form"
-                    style={{ width: '100%', maxWidth: '100%', border: dragActive ? '2px dashed #6366f1' : '2px dashed rgba(255,255,255,0.1)', textAlign: 'center', cursor: 'pointer' }}
+                <div
+                    className={`upload-zone ${dragActive ? 'active' : ''}`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
@@ -119,40 +134,64 @@ const Library = () => {
                     onClick={() => document.getElementById('file-upload').click()}
                 >
                     <input type="file" id="file-upload" style={{ display: 'none' }} onChange={handleChange} />
-                    <Upload size={48} color="#6366f1" style={{ marginBottom: '20px' }} />
-                    <h3 style={{ justifyContent: 'center' }}>Drag & Drop or Click to Upload</h3>
-                    <p style={{ color: '#94a3b8' }}>Supports PDF, Images (Handwritten Notes), Text</p>
-                    {isUploading && <p style={{ color: '#4ade80' }}>Uploading...</p>}
-                </form>
+                    <div className="upload-icon-wrapper">
+                        <Upload size={32} />
+                    </div>
+                    <h3 style={{ fontSize: '1.4rem', color: '#fff', marginBottom: '10px' }}>Drag & Drop or Click to Upload</h3>
+                    <p style={{ color: '#94a3b8' }}>Supports PDF, Images (Handwritten Notes), Text (Max 10MB)</p>
+                    {isUploading && <p style={{ color: '#4ade80', fontWeight: 'bold', marginTop: '15px' }}>Uploading...</p>}
+                </div>
 
-                {/* File List */}
-                <div className="planner-list" style={{ width: '100%' }}>
+                {/* File Grid */}
+                <div className="library-grid">
                     {files.length === 0 ? (
-                        <div className="empty">Your library is empty.</div>
+                        <div className="empty-state">
+                            <Upload size={48} style={{ opacity: 0.2, marginBottom: '15px' }} />
+                            <p>Your library is empty. Upload a file to get started!</p>
+                        </div>
                     ) : (
-                        files.map(file => (
-                            <div key={file._id} className="plan-item">
-                                <div className="plan-date-box" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                                    {file.mimetype.includes('image') ? <File size={24} /> : <FileText size={24} />}
-                                    <span className="time">{file.mimetype.split('/')[1]?.toUpperCase().substring(0, 4)}</span>
-                                </div>
-                                <div className="plan-info">
-                                    <h4>{file.filename}</h4>
-                                    <p style={{ color: '#64748b', fontSize: '0.8rem' }}>
-                                        Added: {new Date(file.uploadedAt).toLocaleDateString()} • {(file.size / 1024 / 1024).toFixed(2)} MB
-                                    </p>
-                                </div>
+                        files.map(file => {
+                            // Determine Icon & Color based on type
+                            let Icon = FileText;
+                            let typeClass = 'text';
+                            if (file.mimetype.includes('image')) { Icon = Image; typeClass = 'image'; }
+                            if (file.mimetype.includes('pdf')) { Icon = File; typeClass = 'pdf'; }
 
-                                {/* Context Toggle (Visual Only for now) */}
-                                <button onClick={(e) => { e.stopPropagation(); toggleContext(file); }} className="del-btn" style={{ borderColor: '#22c55e', color: '#22c55e', transform: 'none' }} title="Context Active">
-                                    <CheckCircle size={18} />
-                                </button>
+                            return (
+                                <div key={file._id} className="file-card">
+                                    <div>
+                                        <div className="file-header">
+                                            <div className={`file-icon-lg ${typeClass}`}>
+                                                <Icon size={24} />
+                                            </div>
+                                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.7rem', color: '#cbd5e1' }}>
+                                                {file.mimetype.split('/')[1].toUpperCase()}
+                                            </div>
+                                        </div>
+                                        <div className="file-name" title={file.filename}>{file.filename}</div>
+                                        <div className="file-meta">
+                                            {file.size ? (file.size / 1024 / 1024).toFixed(2) : 0} MB • {new Date(file.uploadedAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
 
-                                <button onClick={(e) => { e.stopPropagation(); handleDelete(file._id); }} className="del-btn">
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        ))
+                                    <div className="file-actions">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleContext(file); }}
+                                            className="action-btn context active"
+                                            title="Context Active (Simulated)"
+                                        >
+                                            <CheckCircle size={14} /> Active
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(file._id); }}
+                                            className="action-btn delete"
+                                        >
+                                            <Trash2 size={14} /> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })
                     )}
                 </div>
             </div>

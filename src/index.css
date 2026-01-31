@@ -53,9 +53,9 @@ HTML,
         text-decoration: none;
 }
 
-/* Reader Selection Override */
-.reader-rroot,
-.reader-rroot * {
+/* Only enable text selection in lesson content */
+.nnote,
+.nnote * {
         -webkit-user-select: text;
         -moz-user-select: text;
         -ms-user-select: text;

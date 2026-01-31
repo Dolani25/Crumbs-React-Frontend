@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { validateDesmosExpression, isValidDesmosExpression } from '../utils/latexValidator';
+import { parseMultipleExpressions, isValidDesmosExpression } from '../utils/latexValidator';
 
 const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) => {
     const calculatorRef = useRef(null);
@@ -23,27 +23,27 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                         yAxisStep: 1
                     });
 
-                    // 🔧 Validate and sanitize expression before setting
-                    const validatedExpr = validateDesmosExpression(expression);
+                    // 🔧 Parse and validate expression(s)
+                    const expressions = parseMultipleExpressions(expression);
 
                     try {
-                        calculatorRef.current.setExpression({
-                            id: 'graph1',
-                            latex: validatedExpr
+                        // Add each expression with unique ID
+                        expressions.forEach((expr, index) => {
+                            calculatorRef.current.setExpression({
+                                id: `graph${index + 1}`,
+                                latex: expr
+                            });
                         });
                         setIsValidated(true);
                     } catch (desmosErr) {
                         console.error("Desmos setExpression failed:", desmosErr);
-                        // Try a fallback expression
-                        if (validatedExpr !== 'y=x') {
-                            console.warn("Falling back to y=x");
-                            calculatorRef.current.setExpression({
-                                id: 'graph1',
-                                latex: 'y=x'
-                            });
-                        }
+                        // Try fallback
+                        calculatorRef.current.setExpression({
+                            id: 'graph1',
+                            latex: 'y=x'
+                        });
                         if (mounted) {
-                            setError(`Failed to parse equation: "${expression}". Using default.`);
+                            setError(`Equation error: "${expression}". Using default graph.`);
                         }
                     }
                 }
@@ -87,17 +87,26 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
     }, []);
 
     useEffect(() => {
+        let mounted = true;
+
         if (calculatorRef.current) {
-            // 🔧 Validate before updating
-            const validatedExpr = validateDesmosExpression(expression);
+            // 🔧 Parse into multiple expressions if needed
+            const expressions = parseMultipleExpressions(expression);
 
             try {
-                calculatorRef.current.setExpression({
-                    id: 'graph1',
-                    latex: validatedExpr
+                // Clear existing expressions
+                calculatorRef.current.setBlank();
+
+                // Add each expression
+                expressions.forEach((expr, index) => {
+                    calculatorRef.current.setExpression({
+                        id: `graph${index + 1}`,
+                        latex: expr
+                    });
                 });
 
                 // Auto-Detect and Inject Sliders for Variables
+                const allExpressions = expressions.join(' ');
                 const commonVars = [
                     '\\sigma', '\\mu', '\\alpha', '\\beta', '\\gamma', '\\lambda', '\\theta', '\\phi',
                     'a', 'b', 'c', 'd', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't'
@@ -107,18 +116,22 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                     const escV = v.replace(/\\/g, '\\\\');
                     const regex = new RegExp(`(^|[^a-zA-Z\\\\])${escV}([^a-zA-Z]|$)`);
 
-                    if (regex.test(validatedExpr)) {
+                    if (regex.test(allExpressions)) {
                         calculatorRef.current.setExpression({
                             id: `slider_${v.replace(/\\/g, '')}`,
                             latex: `${v}=1`
                         });
                     }
                 });
+
+                setError(null); // Clear any previous errors
             } catch (err) {
                 console.error("Failed to update Desmos expression:", err);
-                if (mounted) setError(`Invalid equation syntax: ${err.message}`);
+                if (mounted) setError(`Invalid equation: ${err.message}`);
             }
         }
+
+        return () => { mounted = false; };
     }, [expression]);
 
     if (error) {
@@ -140,6 +153,61 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
         )
     }
 
+    // Clean display text - remove LaTeX backslashes for user readability
+    const cleanForDisplay = (text) => {
+        return text
+            // Functions
+            .replace(/\\sin/g, 'sin')
+            .replace(/\\cos/g, 'cos')
+            .replace(/\\tan/g, 'tan')
+            .replace(/\\log/g, 'log')
+            .replace(/\\ln/g, 'ln')
+            .replace(/\\sqrt/g, 'sqrt')
+            .replace(/\\frac/g, 'frac')
+            // Greek letters
+            .replace(/\\pi/g, 'π')
+            .replace(/\\theta/g, 'θ')
+            .replace(/\\alpha/g, 'α')
+            .replace(/\\beta/g, 'β')
+            .replace(/\\gamma/g, 'γ')
+            .replace(/\\lambda/g, 'λ')
+            .replace(/\\mu/g, 'μ')
+            .replace(/\\sigma/g, 'σ')
+            .replace(/\\phi/g, 'φ')
+            .replace(/\\omega/g, 'ω')
+            // Inequalities
+            .replace(/\\le/g, '≤')
+            .replace(/\\ge/g, '≥')
+            .replace(/\\leq/g, '≤')
+            .replace(/\\geq/g, '≥')
+            .replace(/\\ne/g, '≠')
+            .replace(/\\neq/g, '≠')
+            // Text/mathrm (remove wrapper, keep content)
+            .replace(/\\text\{([^}]+)\}/g, '$1')
+            .replace(/\\mathrm\{([^}]+)\}/g, '$1')
+            // Only remove remaining backslashes that are NOT followed by known commands
+            .replace(/\\(?![a-zA-Z])/g, ''); // Remove backslash only if not followed by letters
+    };
+
+    // Get display title from expression
+    const getDisplayTitle = () => {
+        const cleaned = cleanForDisplay(expression);
+        // Limit length for very long equations
+        if (cleaned.length > 80) {
+            return cleaned.substring(0, 77) + '...';
+        }
+        return cleaned;
+    };
+
+    // Dynamic font size based on equation length
+    const getTitleFontSize = () => {
+        const len = expression.length;
+        if (len > 100) return '0.75rem';
+        if (len > 60) return '0.9rem';
+        if (len > 40) return '1rem';
+        return '1.1rem';
+    };
+
     return (
         <div className="tool-container desmos-grapher" style={{
             margin: '20px 0',
@@ -155,13 +223,41 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                 alignItems: 'center',
                 marginBottom: '10px',
                 paddingBottom: '10px',
-                borderBottom: '1px solid #eee'
+                borderBottom: '1px solid #eee',
+                gap: '10px'
             }}>
-                <h4 style={{ margin: 0, color: '#FE4F30' }}>
-                    <i className="fas fa-calculator" style={{ marginRight: '8px' }}></i>
-                    {title}
-                </h4>
-                <span style={{ fontSize: '0.8rem', color: '#888' }}>Powered by Desmos</span>
+                <div style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <i className="fas fa-function" style={{
+                        color: '#FE4F30',
+                        fontSize: '1.2rem',
+                        flexShrink: 0
+                    }}></i>
+                    <h4 style={{
+                        margin: 0,
+                        color: '#333',
+                        fontSize: getTitleFontSize(),
+                        fontFamily: 'monospace',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {getDisplayTitle()}
+                    </h4>
+                </div>
+                <span style={{
+                    fontSize: '0.75rem',
+                    color: '#888',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                }}>
+                    Desmos
+                </span>
             </div>
 
             <div
@@ -169,8 +265,8 @@ const DesmosGrapher = ({ expression = "y=x^2", title = "Interactive Graph" }) =>
                 style={{ width: '100%', height: '400px', borderRadius: '8px', overflow: 'hidden' }}
             ></div>
 
-            <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '8px', textAlign: 'center' }}>
-                Type equations to explore the graph!
+            <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '8px', textAlign: 'center' }}>
+                Interactive graphing calculator
             </p>
         </div>
     );

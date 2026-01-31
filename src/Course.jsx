@@ -56,7 +56,7 @@ const Course = ({ course, onDelete, onReset }) => {
           padding: '4px',
           color: 'white',
           cursor: 'pointer',
-          zIndex: 20,
+          zIndex: 10,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

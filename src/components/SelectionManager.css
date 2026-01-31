@@ -1,0 +1,73 @@
+.selection-toolbar {
+    display: flex;
+    gap: 4px;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+    animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.selection-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.selection-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.selection-btn:active {
+    transform: translateY(0);
+}
+
+.selection-btn-copy:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.selection-btn-explain:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.selection-btn-discuss:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .selection-toolbar {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .selection-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+}

@@ -2,254 +2,290 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const ManimVisualizer = ({ scriptContent }) => {
     const containerRef = useRef(null);
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [iframeSrc, setIframeSrc] = useState(null);
     const [error, setError] = useState(null);
 
+    // IFrame Generation Effect
     useEffect(() => {
-        const loadScripts = async () => {
-            const scripts = [
-                '/manim/lib/p5/p5.min.js', // P5.js core only
-            ];
+        if (scriptContent) {
+            console.groupCollapsed("Manim Script (Generated)");
+            console.log(scriptContent);
+            console.groupEnd();
 
-            try {
-                for (const src of scripts) {
-                    // Check if already loaded by tag to prevent duplicates
-                    if (!document.querySelector(`script[src="${src}"]`)) {
-                        await new Promise((resolve, reject) => {
-                            const script = document.createElement('script');
-                            script.src = src;
-                            script.async = false;
-                            script.onload = resolve;
-                            script.onerror = () => reject(new Error(`Failed to load ${src}`));
-                            document.body.appendChild(script);
-                        });
-                    }
+            // ====== CODE VALIDATION & AUTO-FIX ======
+            const validateAndFixManimCode = (code) => {
+                let fixed = code;
+                const warnings = [];
+
+                // 1. Remove ALL comments
+                const commentsBefore = (fixed.match(/\/\/|\/\*/g) || []).length;
+                fixed = fixed.replace(/\/\/.*$/gm, ''); // Single-line comments
+                fixed = fixed.replace(/\/\*[\s\S]*?\*\//g, ''); // Multi-line comments
+                if (commentsBefore > 0) warnings.push(`⚠️ Removed ${commentsBefore} comments`);
+
+                // 2. Balance braces (DISABLED: Breaks LaTeX strings)
+                /*
+                const openBraces = (fixed.match(/\{/g) || []).length;
+                const closeBraces = (fixed.match(/\}/g) || []).length;
+                if (openBraces > closeBraces) {
+                    fixed += '\n}'.repeat(openBraces - closeBraces);
+                    warnings.push(`⚠️ Added missing closing braces`);
                 }
-                // Small delay to ensure p5 global namespace is ready
-                setTimeout(() => setIsLoaded(true), 100);
-            } catch (err) {
-                console.error("Manim Load Error:", err);
-                setError(err.message);
-            }
-        };
+                */
 
-        loadScripts();
+                // 2.5. Validate function braces specifically (safer than global brace balancing)
+                const validateFunctionBraces = (code) => {
+                    // Find all function declarations
+                    const functionPattern = /function\s+(\w+)\s*\([^)]*\)\s*\{/g;
+                    let match;
+                    let validatedCode = code;
 
-    }, []);
+                    while ((match = functionPattern.exec(code)) !== null) {
+                        const funcName = match[1];
+                        const startPos = match.index + match[0].length;
 
-    useEffect(() => {
-        if (isLoaded && containerRef.current) {
-            console.log("Manim Environment Loaded. ScriptContent length:", scriptContent ? scriptContent.length : "N/A");
+                        // Count braces from start of function body
+                        let braceCount = 1;
+                        let pos = startPos;
+                        let foundEnd = false;
 
-            if (scriptContent) {
-                console.log("ManimVisualizer: Original Script:", scriptContent);
-
-                // ====== CODE VALIDATION & AUTO-FIX ======
-                const validateAndFixManimCode = (code) => {
-                    let fixed = code;
-                    const warnings = [];
-
-                    // 1. Remove ALL comments (most critical fix)
-                    const commentsBefore = (fixed.match(/\/\/|\/\*/g) || []).length;
-                    fixed = fixed.replace(/\/\/.*$/gm, ''); // Single-line comments
-                    fixed = fixed.replace(/\/\*[\s\S]*?\*\//g, ''); // Multi-line comments
-                    if (commentsBefore > 0) {
-                        warnings.push(`⚠️  Removed ${commentsBefore} comment(s) - comments break script execution`);
-                    }
-
-                    // 2. Balance braces
-                    const openBraces = (fixed.match(/\{/g) || []).length;
-                    const closeBraces = (fixed.match(/\}/g) || []).length;
-                    if (openBraces > closeBraces) {
-                        const missing = openBraces - closeBraces;
-                        fixed += '\n}'.repeat(missing);
-                        warnings.push(`⚠️  Added ${missing} missing closing brace(s)`);
-                    } else if (closeBraces > openBraces) {
-                        warnings.push(`❌ More closing braces than opening ones - code may be malformed`);
-                    }
-
-                    // 3. Balance parentheses
-                    const openParens = (fixed.match(/\(/g) || []).length;
-                    const closeParens = (fixed.match(/\)/g) || []).length;
-                    if (openParens !== closeParens) {
-                        warnings.push(`❌ Unbalanced parentheses: ${openParens} open, ${closeParens} close`);
-                    }
-
-                    // 4. Check setup() and draw() exist (ONLY for non-Scene patterns)
-                    const hasScenePattern = fixed.includes('const Scene =') || fixed.includes('let Scene =') || fixed.includes('var Scene =');
-
-                    if (!hasScenePattern) {
-                        // Legacy P5.js global mode - needs global setup/draw
-                        if (!fixed.includes('function setup')) {
-                            warnings.push(`❌ Missing setup() function - adding stub`);
-                            fixed = 'function setup() { createCanvas(800, 450); }\n' + fixed;
+                        while (pos < code.length && braceCount > 0) {
+                            const char = code[pos];
+                            if (char === '{') braceCount++;
+                            else if (char === '}') {
+                                braceCount--;
+                                if (braceCount === 0) {
+                                    foundEnd = true;
+                                    break;
+                                }
+                            }
+                            pos++;
                         }
-                        if (!fixed.includes('function draw')) {
-                            warnings.push(`❌ Missing draw() function - adding stub`);
-                            fixed += '\nfunction draw() { background(0); }';
-                        }
-                    } else {
-                        // Manim.js Scene pattern - verify s.setup and s.draw exist
-                        if (!fixed.includes('s.setup =')) {
-                            warnings.push(`❌ Scene missing s.setup - add: s.setup = function() {...}`);
-                        }
-                        if (!fixed.includes('s.draw =')) {
-                            warnings.push(`❌ Scene missing s.draw - add: s.draw = function() {...}`);
+
+                        // If function not properly closed, add closing brace at end
+                        if (!foundEnd && braceCount > 0) {
+                            validatedCode += '\n}'.repeat(braceCount);
+                            warnings.push(`⚠️ Closed incomplete ${funcName}() function`);
                         }
                     }
 
-                    // 5. Text collision detection & auto-fix
-                    const textMatches = [...fixed.matchAll(/text\([^,]+,\s*[^,]+,\s*(\d+)/g)];
-                    if (textMatches.length > 1) {
-                        const yCoords = textMatches.map(m => parseInt(m[1]));
-                        const uniqueYs = new Set(yCoords);
-                        if (uniqueYs.size < yCoords.length) {
-                            warnings.push(`⚠️  Text elements may overlap - auto-spacing with 40px gaps`);
-                            let yOffset = 50;
-                            fixed = fixed.replace(/text\(([^)]+)\)/g, (match) => {
-                                const result = match.replace(/,\s*\d+\s*\)/, `, ${yOffset})`);
-                                yOffset += 40;
-                                return result;
-                            });
-                        }
-                    }
-
-                    // 6. Log all warnings
-                    if (warnings.length > 0) {
-                        console.warn("🔧 Manim Code Auto-Fix Applied:");
-                        warnings.forEach(w => console.warn(w));
-                    } else {
-                        console.log("✅ Manim Code Validation Passed");
-                    }
-
-                    return fixed;
+                    return validatedCode;
                 };
 
-                // Apply validation
-                let modifiedScript = validateAndFixManimCode(scriptContent);
+                fixed = validateFunctionBraces(fixed);
 
-                // 1. Force Parenting & Sizing via Regex
-                // Replaces: createCanvas(w, h) OR s.createCanvas(w, h)
-                // With:    createCanvas(w, h).parent('manim-canvas-container')
-                // This ensures both Global Mode and Instance Mode (s.createCanvas) are parented correctly.
+                // 4. Setup/Draw Stubs for Legacy Modes
+                const hasScene = fixed.includes('Scene =');
+                if (!hasScene) {
+                    // Logic moved to main effect to handle inferred WEBGL
+                    if (!fixed.includes('function draw')) fixed += '\nfunction draw() { background(0); }';
+                }
+
+                if (warnings.length > 0) console.warn("Manim Auto-Fix:", warnings);
+                return fixed;
+            };
+
+            let modifiedScript = validateAndFixManimCode(scriptContent);
+
+            // Force Full Window Canvas in Iframe
+            // Force Full Window Canvas in Iframe (Preserving WEBGL if used, or inferring it)
+            // Force Full Window Canvas in Iframe (Preserving WEBGL if used, or inferring it)
+            // 'translate' is common in 2D too, so remove it to avoid forcing WEBGL mode.
+            const threeDKeywords = ['WEBGL', 'rotateX', 'rotateY', 'rotateZ', 'sphere', 'box', 'cylinder', 'cone', 'torus', 'plane', 'ellipsoid', 'orbitControl', 'ambientLight', 'directionalLight', 'pointLight'];
+            const inferredWebgl = threeDKeywords.some(kw => modifiedScript.includes(kw));
+
+            // Polyfill 'circle' if missing (older p5 versions or scope issues)
+            const circlePolyfill = `
+                if (typeof circle === 'undefined') {
+                    window.circle = function(x, y, r) {
+                        if (typeof ellipse === 'function') {
+                            ellipse(x, y, r, r);
+                        }
+                    };
+                }
+            `;
+
+            // Add Polyfill to Setup
+            if (modifiedScript.includes('function setup')) {
+                modifiedScript = modifiedScript.replace('function setup() {', 'function setup() { ' + circlePolyfill);
+            } else {
+                // It will be wrapped later if setup missing
+            }
+
+            // Force Full Window Canvas DISABLED
+            // (Use CSS scaling instead to handle mobile. This preserves absolute coordinates.)
+            /*
+            if (modifiedScript.match(/createCanvas\s*\(/)) {
                 modifiedScript = modifiedScript.replace(
                     /createCanvas\s*\(([^)]+)\)/g,
-                    "createCanvas($1).parent('manim-canvas-container')"
-                ).replace(/`/g, '\\`'); // Escape backticks to prevent template string breakage
+                    (match, args) => {
+                        if (args.includes('WEBGL') || inferredWebgl) {
+                            return "createCanvas(windowWidth, windowHeight, WEBGL)";
+                        }
+                        return "createCanvas(windowWidth, windowHeight)";
+                    }
+                );
+            } else {
+                 // Inject setup if missing
+                 if (!modifiedScript.includes('function setup')) {
+                     const mode = inferredWebgl ? 'WEBGL' : '';
+                     // Default to standard HD size if no createCanvas provided, CSS will scale it down.
+                     modifiedScript = `function setup() { \n${circlePolyfill}\ncreateCanvas(800, 450${mode ? ', ' + mode : ''}); }\n` + modifiedScript;
+                 }
+            }
+            */
 
-                console.log("ManimVisualizer: Modified Script:", modifiedScript);
+            // Inject setup if missing (Still needed, but default to 800x450 for scaling)
+            if (!modifiedScript.includes('function setup')) {
+                const mode = inferredWebgl ? 'WEBGL' : '';
+                modifiedScript = `function setup() { \n${circlePolyfill}\ncreateCanvas(800, 450${mode ? ', ' + mode : ''}); }\n` + modifiedScript;
+            } else if (inferredWebgl && !modifiedScript.includes('WEBGL')) {
+                // If setup exists but we inferred WEBGL and it's missing, try to inject it.
+                // This handles: setup() { createCanvas(800, 450); } -> setup() { createCanvas(800, 450, WEBGL); }
+                modifiedScript = modifiedScript.replace(/createCanvas\s*\(([^)]+)\)/, (match, args) => {
+                    return `createCanvas(${args}, WEBGL)`;
+                });
+            }
 
-                // Remove existing user script if any
-                const existingScript = document.getElementById('manim-user-script');
-                if (existingScript) {
-                    console.log("ManimVisualizer: Removing previous script...");
-                    existingScript.remove();
-                }
+            // Escape for Template String embedding
+            const safeScript = modifiedScript.replace(/`/g, '\\`').replace(/<\/script>/g, '<\\/script>');
 
-                // Reset p5 instance if possible
-                if (window.currentP5) {
-                    console.log("ManimVisualizer: Removing previous P5 instance...");
-                    window.currentP5.remove();
-                    window.currentP5 = null;
-                }
+            // Construct IFrame HTML
+            const iframeHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { margin: 0; padding: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; }
+                        canvas { 
+                            box-shadow: 0 4px 30px rgba(0,0,0,0.5); 
+                            /* Fix Mobile Cutoff: max-width/height ensures canvas scales down to fit viewport without clipping */
+                            max-width: 100vw;
+                            max-height: 100vh;
+                            width: auto !important;
+                            height: auto !important;
+                            object-fit: contain;
+                        }
+                    </style>
+                    <script>
+                        // Global error handler
+                        window.onerror = function(msg, url, line) {
+                            window.parent.postMessage({ type: 'MANIM_ERROR', msg: msg }, '*');
+                        };
 
-                // Clear any previous Scene definition
-                if (typeof window.Scene !== 'undefined') {
-                    console.log("ManimVisualizer: Clearing previous Scene...");
-                    window.Scene = undefined;
-                }
+                        function startP5() {
+                            console.log("Manim: P5 Library Loaded via onload");
+                            if (window.p5) {
+                                console.log("Manim: Starting P5...");
+                                new p5();
+                            } else {
+                                console.error("Manim: P5 loaded but window.p5 is undefined");
+                            }
+                        }
+                    </script>
+                    <script src="${window.location.origin}/manim/lib/p5/p5.min.js" onload="startP5()" onerror="console.error('Manim: Failed to load P5 library')"></script>
+                </head>
+                <body>
+                    <script>
+                        // --- FONT LOADING SHIM ---
+                        let _manimFont;
+                        
+                        // Hook into window.preload
+                        const _userPreload = window.preload;
+                        window.preload = function() {
+                            console.log("Manim: Preload started");
+                            // Use absolute URL for font too
+                            _manimFont = loadFont('${window.location.origin}/manim/lib/katex/fonts/KaTeX_SansSerif-Regular.ttf', 
+                                () => console.log("Manim: Font loaded success"),
+                                (err) => console.error("Manim: Font load failed", err)
+                            );
+                            if (typeof _userPreload === 'function') _userPreload();
+                        };
 
-                // Create the execution logic
-                const executionLogic = `
-                    console.log("ManimVisualizer: Executing P5.js script...");
-                    setTimeout(() => {
-                        if (window.currentP5) {
-                            console.log("ManimVisualizer: Removing previous P5 instance...");
-                            window.currentP5.remove();
+                         // Hook Setup
+                        const _userSetup = window.setup;
+                        window.setup = function() {
+                            console.log("Manim: Setup started");
+                            if (typeof _userSetup === 'function') _userSetup();
+                            if (_manimFont) textFont(_manimFont);
+                            console.log("Manim: Setup finished");
+                        };
+
+                        // Hook Draw
+                        const _userDraw = window.draw;
+                        let _firstDraw = true;
+                        window.draw = function() {
+                             if (_firstDraw) {
+                                 console.log("Manim: First Draw Frame");
+                                 _firstDraw = false;
+                             }
+                             if (typeof _userDraw === 'function') _userDraw();
                         }
                         
-                        if (typeof setup === 'function' && typeof draw === 'function') {
-                            console.log("ManimVisualizer: Found global setup/draw. Launching P5...");
-                            window.currentP5 = new p5();
-                        } else {
-                            console.error("ManimVisualizer: No setup() or draw() functions found.");
+                        window.windowResized = function() {
+                            // Don't modify canvas size here for responsiveness, CSS handles visualization scaling.
+                            // Only resize if P5 logic specifically depends on window size.
+                            // But usually Manim scripts are fixed size.
+                            // resizeCanvas(windowWidth, windowHeight);
                         }
-                    }, 100);
-                `;
+                    </script>
 
-                // Combine strict processing: User Code + Newline + Logic
-                const finalCode = modifiedScript + "\n\n" + executionLogic;
+                    <script>
+                        // --- GLOBAL SHIMS ---
+                        window.width = window.innerWidth;
+                        window.height = window.innerHeight;
 
-                try {
-                    const blob = new Blob([finalCode], { type: 'application/javascript' });
-                    const scriptUrl = URL.createObjectURL(blob);
+                        // --- USER SCRIPT INJECTION ---
+                        ${safeScript}
+                    </script>
+                </body>
+                </html>
+            `;
 
-                    const script = document.createElement('script');
-                    script.id = 'manim-user-script';
-                    script.src = scriptUrl;
+            const blob = new Blob([iframeHtml], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            setIframeSrc(blobUrl);
 
-                    script.onload = () => {
-                        console.log("ManimVisualizer: Blob Script Loaded");
-                        URL.revokeObjectURL(scriptUrl); // Cleanup memory
-                    };
-
-                    script.onerror = (e) => {
-                        console.error("ManimVisualizer: Blob Script Error", e);
-                        URL.revokeObjectURL(scriptUrl);
-                    };
-
-                    document.body.appendChild(script);
-
-                } catch (e) {
-                    console.error("ManimVisualizer: Injection Error:", e);
-                }
-            }
+            return () => URL.revokeObjectURL(blobUrl);
         }
-    }, [isLoaded, scriptContent]);
+    }, [scriptContent]);
 
-    if (error) return <div style={{ color: 'red' }}>Error loading Manim Engine: {error}</div>;
-    if (!isLoaded) return <div>Loading Physics Engine...</div>;
+    // Handle Iframe Errors
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.data && e.data.type === 'MANIM_ERROR') console.error("Manim Iframe Error:", e.data.msg);
+        };
+        window.addEventListener('message', handler);
+        return () => window.removeEventListener('message', handler);
+    }, []);
 
-    if (!scriptContent) {
-        return (
-            <div style={{
-                width: '100%', height: '100%', minHeight: '400px', background: '#111',
-                color: '#666', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'monospace', textAlign: 'center', padding: '20px'
-            }}>
-                <i className="las la-code" style={{ fontSize: '3rem', marginBottom: '10px', opacity: 0.5 }}></i>
-                <p>No visualization script found.</p>
-                <p style={{ fontSize: '0.8rem', marginTop: '10px', color: '#fbbf24' }}>
-                    Click "Regenerate" to create a new animation.
-                </p>
-            </div>
-        );
-    }
+    if (!scriptContent) return <div style={{ color: '#666', padding: '20px', textAlign: 'center' }}>No script content</div>;
 
     return (
         <div
-            id="manim-canvas-container"
             ref={containerRef}
             className="manim-container"
             style={{
                 width: '100%',
                 height: '100%',
+                minHeight: '400px',
                 background: '#000',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden'
+                borderRadius: '12px',
+                overflow: 'hidden',
+                position: 'relative'
             }}
         >
-            <style>{`
-                #manim-canvas-container canvas {
-                    width: 100% !important;
-                    height: 100% !important;
-                    object-fit: contain !important;
-                }
-            `}</style>
-            {/* Canvas will be injected here by p5/manim */}
+            {iframeSrc ? (
+                <iframe
+                    src={iframeSrc}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    title="Manim Visualization"
+                // Sandbox removed to prevent 'allow-scripts' + 'allow-same-origin' console warning.
+                />
+            ) : (
+                <div style={{ color: '#fff', textAlign: 'center', paddingTop: '50px' }}>Loading Visualizer...</div>
+            )}
         </div>
     );
 };

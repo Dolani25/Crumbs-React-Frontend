@@ -21,7 +21,6 @@ import Pinned from './pages/Pinned.jsx';
 import About from './pages/About.jsx';
 import Settings from './pages/Settings.jsx';
 import NotFound from './pages/NotFound.jsx';
-import { dummyCourses } from './dummyCourses.js';
 import { loadUser, syncCourses, updateXP, deleteCourse } from './api.js';
 
 import { secureStorage } from './utils/secureStorage.js';
@@ -49,10 +48,18 @@ function App() {
     const local = (await secureStorage.getItem('crumbs_courses')) || [];
 
     if (local.length > 0) {
-      const normalizedLocal = local.flat().map(c => ({
-        ...c,
-        title: c.title || c.name || "Untitled Course"
-      }));
+      const normalizedLocal = local
+        .flat()
+        .filter(c => {
+          // Only keep courses with valid titles
+          if (!c) return false;
+          const title = c.title || c.name || '';
+          return title.trim() !== '' && title !== "Untitled Course";
+        })
+        .map(c => ({
+          ...c,
+          title: c.title || c.name
+        }));
 
       // Sync with Cloud Truth
       try {
@@ -122,7 +129,13 @@ function App() {
       try {
         const normalized = courses
           .flat()
-          .filter(c => c && (c.title || c.name) && (c.title !== "Untitled Course" || c.subtopics))
+          .filter(c => {
+            // Completely exclude courses without valid titles
+            if (!c) return false;
+            const title = c.title || c.name || '';
+            // Only keep courses with actual titles (not empty, not "Untitled Course")
+            return title.trim() !== '' && title !== "Untitled Course";
+          })
           .map(c => {
             // ... normalization logic matching previous code ...
             let finalTopics = c.topics || [];
@@ -135,7 +148,7 @@ function App() {
             }
             return {
               ...c,
-              title: c.title || c.name || "Untitled Course",
+              title: c.title || c.name, // No fallback to "Untitled Course"
               topics: finalTopics
             };
           });
@@ -247,7 +260,7 @@ function App() {
 
           return {
             ...c,
-            title: c.title || c.name || "Untitled Course",
+            title: c.title || c.name, // No fallback
             topics: finalTopics
           };
         });
@@ -528,31 +541,80 @@ function App() {
     }
   }, [user]);
 
-  // Notification Watcher
+  // Request Notification Permission on App Load
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          const permission = await Notification.requestPermission();
+          console.log(`🔔 Notification permission: ${permission}`);
+
+          if (permission === 'granted') {
+            // Show welcome notification
+            new Notification('Crumbs Notifications Enabled! 🎉', {
+              body: 'You\'ll receive reminders for your study plans',
+              icon: '/vite.svg',
+              tag: 'welcome-notification'
+            });
+          }
+        } catch (error) {
+          console.error('Failed to request notification permission:', error);
+        }
+      }
+    };
+
+    // Request after 2 seconds to not interrupt app load
+    const timer = setTimeout(requestNotificationPermission, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Enhanced Notification Watcher
   useEffect(() => {
     if (!user || !user.planner) return;
 
     const checkReminders = () => {
       const now = new Date();
-      user.planner.forEach(plan => {
-        if (plan.isCompleted) return;
-        const planTime = new Date(plan.date);
 
-        // Trigger if within the last minute (to avoid spamming, but catch it)
-        const diff = (now - planTime) / 1000 / 60; // diff in minutes
-        if (diff >= 0 && diff < 1) {
-          // Check if we already notified for this? (Simplification: just notify)
+      user.planner.forEach(plan => {
+        // Skip if completed or notification already sent
+        if (plan.isCompleted || plan.notificationSent) return;
+
+        const planTime = new Date(plan.date);
+        const reminderMinutes = plan.reminderTime || 15; // Default 15 min
+        const reminderTime = new Date(planTime.getTime() - reminderMinutes * 60 * 1000);
+
+        // Check if we're within the reminder window (30 seconds before and after reminder time)
+        const diff = (now - reminderTime) / 1000; // diff in seconds
+
+        if (diff >= 0 && diff < 30) {
+          // Time to send notification
           if (Notification.permission === 'granted') {
-            new Notification(`Time to study: ${plan.title}`, {
-              body: "Your planned session is starting now!",
-              icon: '/vite.svg' // Fallback icon
+            const priorityEmoji = {
+              high: '🔴',
+              medium: '🟡',
+              low: '🟢'
+            }[plan.priority || 'medium'];
+
+            new Notification(`${priorityEmoji} Reminder: ${plan.title}`, {
+              body: `Starting in ${reminderMinutes} minutes at ${planTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+              icon: '/vite.svg',
+              tag: plan._id || plan.title, // Prevent duplicates
+              requireInteraction: false
             });
+
+            // Mark as sent (will sync on next update)
+            // Note: This won't persist until next sync, but prevents spam during this session
+            plan.notificationSent = true;
           }
         }
       });
     };
 
-    const interval = setInterval(checkReminders, 10000); // Check every 10 sec
+    // Check every 30 seconds (balance between responsiveness and performance)
+    const interval = setInterval(checkReminders, 30000);
+    // Check immediately on mount
+    checkReminders();
+
     return () => clearInterval(interval);
   }, [user]);
 

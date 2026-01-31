@@ -8,7 +8,7 @@ nav {
   border-radius: 0px;
   background: var(--bg-secondary);
   font-family: "Croissant One", serif;
-  z-index: 100 !important;
+  z-index: 1000 !important;
   transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
   position: fixed;

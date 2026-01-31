@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getPublicCourses, likeCourse } from '../api';
-import './Planner.css'; // Reusing Planner/Glass styles
-import './Community.css'; // Reusing Community grid styles
-import { MessageSquare, Heart, Share2, BookOpen, User, Quote } from 'lucide-react';
+import './Feed.css'; // New Styles
+import { MessageSquare, Heart, Share2, BookOpen, User, Quote, TrendingUp, Grid, Hash } from 'lucide-react';
 import axios from 'axios';
 
 const Feed = () => {
@@ -84,122 +83,132 @@ const Feed = () => {
 
     // Render Items
     const renderPost = (post) => (
-        <div key={post._id} className="plan-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '15px', background: 'rgba(30, 41, 59, 0.6)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <User color="white" size={20} />
+        <div key={post._id} className="feed-item">
+            <div className="post-header">
+                <div className="user-avatar-sm">
+                    <User size={20} />
                 </div>
-                <div>
-                    <h4 style={{ margin: 0, color: '#f8fafc' }}>{post.username}</h4>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                <div className="post-meta">
+                    <h4>{post.username}</h4>
+                    <span>
                         {new Date(post.createdAt).toLocaleDateString()}
-                        {post.type === 'question' && <span className="status-badge upcoming" style={{ marginLeft: '8px' }}>Question</span>}
-                        {post.type === 'thought' && <span className="status-badge" style={{ marginLeft: '8px', background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe' }}>Thought</span>}
+                        {post.type === 'question' && <span style={{ color: '#f59e0b', marginLeft: '8px' }}>• Asked a Question</span>}
+                        {post.type === 'thought' && <span style={{ color: '#a855f7', marginLeft: '8px' }}>• Shared a Thought</span>}
                     </span>
                 </div>
             </div>
 
             {/* Context (Line/Lesson) */}
             {post.context && post.context.lineContent && (
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #6366f1', width: '100%', fontStyle: 'italic', color: '#cbd5e1' }}>
-                    <Quote size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+                <div className="context-box">
+                    <Quote size={14} style={{ marginRight: '5px' }} />
                     "{post.context.lineContent}"
-                    {post.context.courseTitle && <div style={{ fontSize: '0.75rem', marginTop: '5px', color: '#6366f1' }}>in {post.context.courseTitle}</div>}
+                    {post.context.courseTitle && <div style={{ fontSize: '0.8rem', marginTop: '5px', color: '#818cf8', fontWeight: '600' }}>in {post.context.courseTitle}</div>}
                 </div>
             )}
 
-            <p style={{ margin: 0, color: '#e2e8f0', lineHeight: '1.6' }}>{post.content}</p>
+            <div className="post-content">
+                {post.content}
+            </div>
 
-            <div style={{ display: 'flex', gap: '20px', marginTop: '5px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px', width: '100%' }}>
+            <div className="interaction-bar">
                 <button
                     onClick={() => handleLikePost(post._id)}
-                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    className={`interaction-btn ${post.likes && post.likes.includes('me') ? 'liked' : ''}`}
                 >
-                    <Heart size={18} /> {post.likes ? post.likes.length : 0}
+                    <Heart size={18} fill={post.likes && post.likes.includes('me') ? "currentColor" : "none"} />
+                    {post.likes ? post.likes.length : 0}
                 </button>
-                <button style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button className="interaction-btn">
                     <MessageSquare size={18} /> {post.comments ? post.comments.length : 0}
+                </button>
+                <button className="interaction-btn">
+                    <Share2 size={18} /> Share
                 </button>
             </div>
         </div>
     );
 
     const renderCourse = (course) => (
-        <div key={course._id} className="course-card" style={{ maxWidth: '100%', marginBottom: '20px' }}>
-            <div className="card-icon" style={{ background: course.color || '#6366f1' }}>
-                <i className={course.icon || 'fas fa-book'}></i>
-            </div>
-            <div className="card-content">
-                <h3>{course.title}</h3>
-                <p className="author">Published by @{course.authorName || 'Anonymous'}</p>
-                <div className="card-stats">
-                    <span>❤️ {course.likes ? course.likes.length : 0}</span>
-                    <span>📥 {Math.floor(Math.random() * 50) + 1} students</span>
+        <div key={course._id} className="feed-item" style={{ borderLeft: `4px solid ${course.color || '#6366f1'}` }}>
+            <div className="post-header">
+                <div className="course-icon-sm" style={{ background: course.color || '#6366f1', fontSize: '1.2rem', width: '40px', height: '40px' }}>
+                    <i className={course.icon || 'fas fa-book'}></i>
+                </div>
+                <div className="post-meta">
+                    <h4>{course.title}</h4>
+                    <span>New Course by @{course.authorName || 'Anonymous'}</span>
                 </div>
             </div>
-            <button className="like-btn">View</button>
+
+            <p className="post-content" style={{ color: '#cbd5e1' }}>
+                Currently learning with {Math.floor(Math.random() * 50) + 1} other students.
+                Check out the new modules!
+            </p>
+
+            <div className="interaction-bar">
+                <button className="interaction-btn" style={{ color: '#6366f1' }}>
+                    <BookOpen size={18} /> View Course
+                </button>
+                <button className="interaction-btn">
+                    <Heart size={18} /> {course.likes ? course.likes.length : 0}
+                </button>
+            </div>
         </div>
     );
 
     return (
-        <div className="planner-page">
-            <div className="planner-header">
-                <h1>Social Feed 🌍</h1>
-                <p style={{ color: '#94a3b8' }}>See what everyone is learning and thinking!</p>
-            </div>
+        <div className="feed-page">
+            <div className="feed-container">
 
-            <div className="planner-content" style={{ flexDirection: 'row-reverse' }}>
-
-                {/* Right Column: Trending / Filter */}
-                <div style={{ flex: 1, minWidth: '300px' }}>
-                    <div className="planner-form" style={{ position: 'sticky', top: '20px', maxWidth: '100%' }}>
-                        <h3>Filters</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <button onClick={() => setView('all')} className={view === 'all' ? 'perm-btn' : 'secondary-cta'} style={{ width: '100%', textAlign: 'left', background: view === 'all' ? undefined : 'rgba(255,255,255,0.05)' }}>
-                                All Activity
-                            </button>
-                            <button onClick={() => setView('discussions')} className={view === 'discussions' ? 'perm-btn' : 'secondary-cta'} style={{ width: '100%', textAlign: 'left', background: view === 'discussions' ? undefined : 'rgba(255,255,255,0.05)' }}>
-                                <MessageSquare size={16} /> Discussions
-                            </button>
-                            <button onClick={() => setView('courses')} className={view === 'courses' ? 'perm-btn' : 'secondary-cta'} style={{ width: '100%', textAlign: 'left', background: view === 'courses' ? undefined : 'rgba(255,255,255,0.05)' }}>
-                                <BookOpen size={16} /> Public Courses
-                            </button>
-                        </div>
+                {/* 1. Left Sidebar: Navigation */}
+                <aside className="left-sidebar">
+                    <div className="filter-card">
+                        <button onClick={() => setView('all')} className={`sidebar-btn ${view === 'all' ? 'active' : ''}`}>
+                            <Grid size={20} /> All Activity
+                        </button>
+                        <button onClick={() => setView('discussions')} className={`sidebar-btn ${view === 'discussions' ? 'active' : ''}`}>
+                            <MessageSquare size={20} /> Discussions
+                        </button>
+                        <button onClick={() => setView('courses')} className={`sidebar-btn ${view === 'courses' ? 'active' : ''}`}>
+                            <BookOpen size={20} /> Public Courses
+                        </button>
+                        <button className="sidebar-btn">
+                            <Hash size={20} /> Trending Tags
+                        </button>
                     </div>
-                </div>
+                </aside>
 
-                {/* Left Column: Feed System */}
-                <div className="planner-list" style={{ flex: 2 }}>
-
-                    {/* Create Post */}
-                    <div className="plan-item" style={{ display: 'block' }}>
+                {/* 2. Main Feed: Content */}
+                <main className="main-feed">
+                    {/* Create Post Widget */}
+                    <div className="create-post-card">
                         <form onSubmit={handleCreatePost}>
-                            <textarea
-                                value={newPostContent}
-                                onChange={(e) => setNewPostContent(e.target.value)}
-                                placeholder="Share a thought, question, or learning tip..."
-                                style={{
-                                    width: '100%',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '12px',
-                                    padding: '15px',
-                                    color: 'white',
-                                    resize: 'none',
-                                    height: '80px',
-                                    marginBottom: '10px'
-                                }}
-                            />
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <button type="submit" disabled={isPosting || !newPostContent} className="perm-btn" style={{ padding: '8px 20px', fontSize: '0.9rem' }}>
-                                    {isPosting ? 'Posting...' : 'Post'}
+                            <div className="create-input-area">
+                                <div className="user-avatar-sm">
+                                    <User size={24} />
+                                </div>
+                                <textarea
+                                    className="post-textarea"
+                                    value={newPostContent}
+                                    onChange={(e) => setNewPostContent(e.target.value)}
+                                    placeholder="What are you learning today?"
+                                />
+                            </div>
+                            <div className="post-actions">
+                                <button type="submit" disabled={isPosting || !newPostContent} className="post-btn">
+                                    {isPosting ? 'Posting...' : 'Post Update'}
                                 </button>
                             </div>
                         </form>
                     </div>
 
-                    {/* Feed Content */}
-                    {loading ? <p style={{ textAlign: 'center', color: '#94a3b8' }}>Loading feed...</p> : (
+                    {/* Feed Loading & List */}
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                            <div className="loading-spinner"></div> Loading feed...
+                        </div>
+                    ) : (
                         <>
                             {view === 'all' && (
                                 <>
@@ -210,18 +219,41 @@ const Feed = () => {
                                 </>
                             )}
                             {view === 'discussions' && posts.map(renderPost)}
-                            {view === 'courses' && (
-                                <div className="community-grid" style={{ gridTemplateColumns: '1fr' }}>
-                                    {courses.map(renderCourse)}
-                                </div>
-                            )}
+                            {view === 'courses' && courses.map(renderCourse)}
 
                             {posts.length === 0 && courses.length === 0 && (
-                                <div className="empty" style={{ margin: 0 }}>No activity yet. Be the first!</div>
+                                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                                    <MessageSquare size={48} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                                    <p>No activity yet. Be the first to post!</p>
+                                </div>
                             )}
                         </>
                     )}
-                </div>
+                </main>
+
+                {/* 3. Right Sidebar: Trending */}
+                <aside className="right-sidebar">
+                    <div className="trending-card">
+                        <div className="trending-header">
+                            <TrendingUp size={20} color="#f59e0b" />
+                            <span>Popular Courses</span>
+                        </div>
+
+                        {courses.slice(0, 4).map(c => (
+                            <div key={c._id} className="mini-course">
+                                <div className="course-icon-sm" style={{ background: c.color || '#6366f1', fontSize: '1rem', width: '32px', height: '32px' }}>
+                                    <i className={c.icon || 'fas fa-book'}></i>
+                                </div>
+                                <div className="course-info">
+                                    <h5>{c.title}</h5>
+                                    <span>{c.likes?.length || 0} Likes</span>
+                                </div>
+                            </div>
+                        ))}
+
+                        {courses.length === 0 && <span style={{ color: '#64748b', fontSize: '0.9rem' }}>No trending courses yet.</span>}
+                    </div>
+                </aside>
 
             </div>
         </div>

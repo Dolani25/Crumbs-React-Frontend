@@ -37,8 +37,19 @@ const userSchema = new mongoose.Schema({
         title: String,
         date: Date, // ISO timestamp for the scheduled reading time
         courseId: String, // Optional link to course
-        isCompleted: { type: Boolean, default: false }
+        isCompleted: { type: Boolean, default: false },
+        priority: { type: String, enum: ['high', 'medium', 'low'], default: 'medium' },
+        category: { type: String, default: 'study' }, // study, exam, project, reading, other
+        reminderTime: { type: Number, default: 15 }, // minutes before the event
+        notificationSent: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
     }],
+    // Notification Preferences
+    notificationPreferences: {
+        enabled: { type: Boolean, default: true },
+        defaultReminderTime: { type: Number, default: 15 }, // minutes
+        sound: { type: Boolean, default: true }
+    },
     // Library / Uploads
     library: [{
         filename: String,

@@ -135,7 +135,11 @@ const VolumeViewer = ({ title = "Reservoir Saturation" }) => {
                 clearTimeout(resizeTimeout);
                 if (context.current) {
                     try {
-                        context.current.genericRenderWindow.delete();
+                        // Critical: Detach from DOM to prevent context leaks
+                        if (context.current.genericRenderWindow) {
+                            context.current.genericRenderWindow.setContainer(null);
+                            context.current.genericRenderWindow.delete();
+                        }
                         context.current.actor.delete();
                         context.current.mapper.delete();
                         context.current.ctf.delete();

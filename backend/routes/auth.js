@@ -251,4 +251,113 @@ router.get('/planner', auth, async (req, res) => {
     }
 });
 
+// @route   PATCH api/auth/planner/:planId
+// @desc    Update a specific planner item
+// @access  Private
+router.patch('/planner/:planId', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        console.log('🔍 Looking for plan ID:', req.params.planId);
+        console.log('📋 User has', user.planner.length, 'plans');
+        console.log('🆔 Available plan IDs:', user.planner.map(p => p._id.toString()));
+
+        const planIndex = user.planner.findIndex(p => p._id.toString() === req.params.planId);
+
+        if (planIndex === -1) {
+            console.error('❌ Plan not found with ID:', req.params.planId);
+            return res.status(404).json({ msg: 'Plan not found' });
+        }
+
+        console.log('✅ Found plan at index:', planIndex);
+
+        // Update allowed fields
+        const { title, date, priority, category, reminderTime, isCompleted } = req.body;
+        if (title !== undefined) user.planner[planIndex].title = title;
+        if (date !== undefined) user.planner[planIndex].date = date;
+        if (priority !== undefined) user.planner[planIndex].priority = priority;
+        if (category !== undefined) user.planner[planIndex].category = category;
+        if (reminderTime !== undefined) user.planner[planIndex].reminderTime = reminderTime;
+        if (isCompleted !== undefined) {
+            user.planner[planIndex].isCompleted = isCompleted;
+            // Reset notification sent when uncompleting
+            if (!isCompleted) user.planner[planIndex].notificationSent = false;
+        }
+
+        await user.save();
+        res.json(user.planner);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PATCH api/auth/planner/:planId/toggle
+// @desc    Toggle completion status of a planner item
+// @access  Private
+router.patch('/planner/:planId/toggle', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        const planIndex = user.planner.findIndex(p => p._id.toString() === req.params.planId);
+        if (planIndex === -1) return res.status(404).json({ msg: 'Plan not found' });
+
+        user.planner[planIndex].isCompleted = !user.planner[planIndex].isCompleted;
+        // Reset notification when uncompleting
+        if (!user.planner[planIndex].isCompleted) {
+            user.planner[planIndex].notificationSent = false;
+        }
+
+        await user.save();
+        res.json(user.planner);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   GET api/auth/notification-preferences
+// @desc    Get user notification preferences
+// @access  Private
+router.get('/notification-preferences', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        res.json(user.notificationPreferences || {
+            enabled: true,
+            defaultReminderTime: 15,
+            sound: true
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PUT api/auth/notification-preferences
+// @desc    Update user notification preferences
+// @access  Private
+router.put('/notification-preferences', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        const { enabled, defaultReminderTime, sound } = req.body;
+        if (!user.notificationPreferences) user.notificationPreferences = {};
+
+        if (enabled !== undefined) user.notificationPreferences.enabled = enabled;
+        if (defaultReminderTime !== undefined) user.notificationPreferences.defaultReminderTime = defaultReminderTime;
+        if (sound !== undefined) user.notificationPreferences.sound = sound;
+
+        await user.save();
+        res.json(user.notificationPreferences);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;

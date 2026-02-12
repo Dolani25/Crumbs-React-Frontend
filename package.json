@@ -17,7 +17,7 @@
     "@react-three/fiber": "^9.5.0",
     "@react-three/rapier": "^2.2.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "d3": "^7.9.0",

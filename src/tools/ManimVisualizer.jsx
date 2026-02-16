@@ -157,15 +157,16 @@ const ManimVisualizer = ({ scriptContent }) => {
                 <head>
                     <meta charset="utf-8">
                     <style>
-                        body { margin: 0; padding: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; }
+                        body { margin: 0; padding: 0; overflow: hidden; background: #000; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; }
                         canvas { 
                             box-shadow: 0 4px 30px rgba(0,0,0,0.5); 
                             /* Fix Mobile Cutoff: max-width/height ensures canvas scales down to fit viewport without clipping */
-                            max-width: 100vw;
-                            max-height: 100vh;
+                            max-width: 100%;
+                            max-height: 100%;
                             width: auto !important;
                             height: auto !important;
                             object-fit: contain;
+                            display: block;
                         }
                     </style>
                     <script>

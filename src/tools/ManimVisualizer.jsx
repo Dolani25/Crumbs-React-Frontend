@@ -139,12 +139,16 @@ const ManimVisualizer = ({ scriptContent }) => {
             if (!modifiedScript.includes('function setup')) {
                 const mode = inferredWebgl ? 'WEBGL' : '';
                 modifiedScript = `function setup() { \n${circlePolyfill}\ncreateCanvas(800, 450${mode ? ', ' + mode : ''}); }\n` + modifiedScript;
-            } else if (inferredWebgl && !modifiedScript.includes('WEBGL')) {
-                // If setup exists but we inferred WEBGL and it's missing, try to inject it.
-                // This handles: setup() { createCanvas(800, 450); } -> setup() { createCanvas(800, 450, WEBGL); }
-                modifiedScript = modifiedScript.replace(/createCanvas\s*\(([^)]+)\)/, (match, args) => {
-                    return `createCanvas(${args}, WEBGL)`;
-                });
+            } else {
+                // Force Resolution in existing setup
+                // This regex finds createCanvas(...) and replaces it with createCanvas(800, 450, WEBGL?)
+                if (modifiedScript.includes('createCanvas')) {
+                    modifiedScript = modifiedScript.replace(/createCanvas\s*\(([^)]+)\)/, (match, args) => {
+                        // Check if WEBGL was already there or needs to be added
+                        const hasWebgl = args.includes('WEBGL') || inferredWebgl;
+                        return `createCanvas(800, 450${hasWebgl ? ', WEBGL' : ''})`;
+                    });
+                }
             }
 
             // Escape for Template String embedding
@@ -234,8 +238,11 @@ const ManimVisualizer = ({ scriptContent }) => {
 
                     <script>
                         // --- GLOBAL SHIMS ---
-                        window.width = window.innerWidth;
-                        window.height = window.innerHeight;
+                        // FIX: Force fixed resolution for Manim logic so it doesn't scale down computations
+                        window.width = 800;
+                        window.height = 450;
+                        window.innerWidth = 800;
+                        window.innerHeight = 450;
 
                         // --- USER SCRIPT INJECTION ---
                         ${safeScript}

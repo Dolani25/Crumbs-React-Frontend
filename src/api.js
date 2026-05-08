@@ -1,58 +1,45 @@
 
 import { secureStorage } from './utils/secureStorage.js';
 
-const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
+const API_URL = '/api';
 
 // Create Wrapper for verify-less requests (if needed) or just standard axios instance
 // For now, simple fetch wrapper
 const api = {
-    get: async (url) => {
+    request: async (url, options = {}) => {
         const token = await secureStorage.getItem('crumbs_token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'x-auth-token': token }),
+            ...options.headers
+        };
+
         const res = await fetch(`${API_URL}${url}`, {
-            headers: { 'x-auth-token': token }
+            ...options,
+            headers
         });
-        if (!res.ok) throw new Error(res.statusText);
-        return { data: await res.json() };
+
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            data = null;
+        }
+
+        if (!res.ok) {
+            const error = new Error(data?.msg || data?.error || res.statusText || 'Request Failed');
+            error.status = res.status;
+            error.data = data;
+            throw error;
+        }
+
+        return { data };
     },
-    post: async (url, body) => {
-        const token = await secureStorage.getItem('crumbs_token');
-        const res = await fetch(`${API_URL}${url}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-            body: JSON.stringify(body)
-        });
-        if (!res.ok) throw new Error(res.statusText);
-        return { data: await res.json() };
-    },
-    put: async (url, body) => {
-        const token = await secureStorage.getItem('crumbs_token');
-        const res = await fetch(`${API_URL}${url}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-            body: JSON.stringify(body)
-        });
-        if (!res.ok) throw new Error(res.statusText);
-        return { data: await res.json() };
-    },
-    patch: async (url, body) => {
-        const token = await secureStorage.getItem('crumbs_token');
-        const res = await fetch(`${API_URL}${url}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-            body: JSON.stringify(body)
-        });
-        if (!res.ok) throw new Error(res.statusText);
-        return { data: await res.json() };
-    },
-    delete: async (url) => {
-        const token = await secureStorage.getItem('crumbs_token');
-        const res = await fetch(`${API_URL}${url}`, {
-            method: 'DELETE',
-            headers: { 'x-auth-token': token }
-        });
-        if (!res.ok) throw new Error(res.statusText);
-        return { data: await res.json() };
-    }
+    get: async (url) => api.request(url, { method: 'GET' }),
+    post: async (url, body) => api.request(url, { method: 'POST', body: JSON.stringify(body) }),
+    put: async (url, body) => api.request(url, { method: 'PUT', body: JSON.stringify(body) }),
+    patch: async (url, body) => api.request(url, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: async (url) => api.request(url, { method: 'DELETE' })
 };
 
 // Auth Services

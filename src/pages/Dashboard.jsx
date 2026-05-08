@@ -10,7 +10,7 @@ const Dashboard = ({ courses, onUploadComplete, onDelete, onReset }) => {
     const validCourses = courses.filter(c => (c.id || c._id) && (c.name || c.title));
 
     return (
-        <div className="courses-container">
+        <div className={validCourses.length > 0 ? "courses-container" : "empty-dashboard-container"}>
             {validCourses.length > 0 ? (
                 <>
                     {validCourses.map(course => (

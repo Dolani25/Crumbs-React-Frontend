@@ -27,7 +27,7 @@ const Login = ({ setAuth }) => {
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.msg || 'Login Failed');
+            setError(err.message || 'Login Failed');
         }
     };
 

@@ -11,7 +11,7 @@ const About = () => {
             <div className="features-grid" style={{ marginTop: '50px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '20px' }}>
                 <div className="feature-card">
                     <h3>AI Generation</h3>
-                    <p>Powered by Google Gemini to create custom lessons on fly.</p>
+                    <p>Powered by Google  to create custom lessons on fly.</p>
                 </div>
                 <div className="feature-card">
                     <h3>Interactive Tools</h3>

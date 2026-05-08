@@ -1,6 +1,6 @@
 import { LessonSchema } from "./schemas";
 import systemPrompt from "./davinci_prompt.md?raw";
-import api from '../api';
+import { chatWithPuter } from './puterClient';
 
 export const generateCrumb = async (courseName, subtopicTitle) => {
     console.log(`🧠 Generating lesson for: ${courseName} - ${subtopicTitle}`);
@@ -16,53 +16,91 @@ Topic: ${subtopicTitle}
 Remember to return ONLY valid JSON matching the schema.
 `;
 
-    // 2. Call Puter Keyless AI with JSON validation enabled
-    try {
-        const response = await window.puter.ai.chat(fullPrompt, {
-            model: 'gemini-2.5-flash', // High-reasoning model (User requested "Highest")
-            responseInfo: { mimeType: "application/json" }
-        });
+    // 2. Call Puter AI directly via official SDK (no backend proxy needed)
+    const maxRetries = 2;
+    let attempt = 0;
+    let validatedLesson = null;
 
-        // 3. Raw Response (Should be valid JSON now)
-        const cleanJson = response.message.content;
+    while (attempt <= maxRetries) {
+        try {
+            console.log(`🧠 Attempt ${attempt + 1}: Generating lesson via Puter AI`);
+            const response = await chatWithPuter(fullPrompt, { model: 'gemini-2.5-flash' });
 
-        // Helper: Aggressive JSON Repair
-        const repairJson = (str) => {
-            try {
-                // First pass: Standard parse
-                return JSON.parse(str);
-            } catch (e1) {
+            // Debug: Ensure the message structure exists
+            if (!response || !response.message) {
+                console.error("Unexpected AI API Response:", response);
+                throw new Error(`Puter API Error: ${JSON.stringify(response)}`);
+            }
+
+            // 3. Raw Response (Should be valid JSON now)
+            const cleanJson = response.message.content;
+
+            // Helper: Aggressive JSON Repair
+            const repairJson = (str) => {
+                let clean = str.replace(/```json/gi, "").replace(/```/g, "").trim();
+                
                 try {
-                    // Second pass: Remove Markdown code blocks
-                    let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
+                    // First pass: Standard parse
                     return JSON.parse(clean);
-                } catch (e2) {
+                } catch (e1) {
+                    console.warn("⚠️ JSON Parse failed. Input (first 200 chars):", clean.slice(0, 200));
                     try {
-                        // Third pass: Fix invalid escape sequences (e.g., \s, \c, \alpha in LaTeX)
-                        // This regex matches a backslash NOT followed by a valid JSON escape char (", \, /, b, f, n, r, t, u)
-                        // It replaces it with double backslash to escape it properly.
-                        console.warn("⚠️ JSON Parse failed. Attempting escape sequence repair...");
-                        let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
-                        // Regex explanation: Match \ that is NOT followed by ["\/bfnrtu]
+                        // Second pass: Fix invalid escape sequences (e.g., \s, \c, \alpha in LaTeX)
+                        console.warn("⚠️ Repair attempt 2: Fixing escape sequences...");
                         const repaired = clean.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
                         return JSON.parse(repaired);
-                    } catch (e3) {
-                        // Fourth pass: Catch control characters in strings (newlines)
-                        console.warn("⚠️ Repair failed. Attempting control char repair...");
-                        let clean = str.replace(/```json/g, "").replace(/```/g, "").trim();
-                        // Replace unescaped newlines within the string (risky but helps)
-                        const repaired = clean.replace(/\n/g, "\\n").replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-                        return JSON.parse(repaired);
+                    } catch (e2) {
+                        try {
+                            // Third pass: Catch unescaped control characters inside strings
+                            console.warn("⚠️ Repair attempt 3: Fixing newlines in strings...");
+                            let inString = false;
+                            let out = "";
+                            for (let i = 0; i < clean.length; i++) {
+                                let c = clean[i];
+                                let isEscape = false;
+                                let b = i - 1;
+                                while (b >= 0 && clean[b] === '\\') {
+                                    isEscape = !isEscape;
+                                    b--;
+                                }
+                                if (c === '"' && !isEscape) {
+                                    inString = !inString;
+                                }
+                                if (inString) {
+                                    if (c === '\n') out += "\\n";
+                                    else if (c === '\r') out += "\\r";
+                                    else if (c === '\t') out += "\\t";
+                                    else out += c;
+                                } else {
+                                    out += c;
+                                }
+                            }
+                            const repaired2 = out.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+                            return JSON.parse(repaired2);
+                        } catch (e3) {
+                            console.error("❌ Final JSON parse failed:", e3);
+                            throw e3;
+                        }
                     }
                 }
+            };
+
+            const parsedData = repairJson(cleanJson);
+
+            // 4. Validate with Zod
+            validatedLesson = LessonSchema.parse(parsedData);
+            console.log("✅ AI Response Validated Successfully");
+            break; // Success, exit retry loop
+            
+        } catch (error) {
+            console.warn(`⚠️ Attempt ${attempt + 1} failed:`, error.message);
+            attempt++;
+            if (attempt > maxRetries) {
+                console.error("❌ Max retries reached. Generation failed.");
+                throw new Error("AI generation failed or was truncated. Please try again.");
             }
-        };
-
-        const parsedData = repairJson(cleanJson);
-
-        // 4. Validate with Zod
-        let validatedLesson = LessonSchema.parse(parsedData);
-        console.log("✅ AI Response Validated Successfully");
+        }
+    }
 
         // 5. Post-Process: Retrieve REAL Images from Wikimedia (ScholarLens Lite)
         console.log("🔍 ScholarLens: Searching for real scientific images...");
@@ -76,7 +114,10 @@ Remember to return ONLY valid JSON matching the schema.
                 const endpoint = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=1&prop=pageimages&piprop=original&format=json&origin=*`;
                 const res = await fetch(endpoint, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                const data = await res.json();
+                const data = await Promise.race([
+                    res.json(),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error("JSON Timeout")), 3000))
+                ]);
 
                 if (data.query && data.query.pages) {
                     const pageId = Object.keys(data.query.pages)[0];
@@ -87,7 +128,7 @@ Remember to return ONLY valid JSON matching the schema.
                 }
                 return null;
             } catch (err) {
-                console.warn("Wikimedia search failed or timed out for:", query, err.name);
+                console.warn("Wikimedia search failed or timed out for:", query, err.message || err.name);
                 return null; // Fail gracefully (no image)
             } finally {
                 clearTimeout(timeoutId);
@@ -122,6 +163,7 @@ Remember to return ONLY valid JSON matching the schema.
                             media: { ...crumb.media, image: realImageUrl }
                         };
                     } else {
+                        console.log(`⚠️ Fallback: Searching for "${keyword} science"`);
                         const fallbackUrl = await searchWikimedia(keyword + " science");
                         if (fallbackUrl) {
                             return {
@@ -149,12 +191,19 @@ Remember to return ONLY valid JSON matching the schema.
         // 6. Post-Process: Fetch Sketchfab 3D Models (if requested)
         // 6. Post-Process: Fetch Sketchfab 3D Models (if requested)
         try {
-            // Check Data Saver Mode (Default: false)
-            // Need to retrieve it from secureStorage (async), but secureStorage might not be imported.
-            // Assuming we pass it or read it here. Since secureStorage is in 'utils', we import it.
-            // Or better: read from localStorage directly for sync access if needed, or await secureStorage.
-            const dataSavingMode = (await import('../utils/secureStorage.js')).secureStorage.getItem('crumbs_data_saver');
-            const isSaverOn = await dataSavingMode; // Await the promise
+            // Check Data Saver Mode with explicit timeout in case IDB hangs
+            const checkDataSaver = async () => {
+                const storageModule = await import('../utils/secureStorage.js');
+                return await storageModule.secureStorage.getItem('crumbs_data_saver');
+            };
+            
+            const isSaverOn = await Promise.race([
+                checkDataSaver(),
+                new Promise(resolve => setTimeout(() => resolve(false), 2000)) // 2s timeout
+            ]).catch(err => {
+                console.warn("Data saver check failed or timed out, defaulting to false.", err);
+                return false;
+            });
 
 
             for (const crumb of validatedLesson.crumbs) {
@@ -232,12 +281,8 @@ Remember to return ONLY valid JSON matching the schema.
             // Continue even if Sketchfab fails
         }
 
+        console.log("✅ DavinciGenerator Finished Successfully! Returning lesson:", validatedLesson.title);
         return validatedLesson;
-
-    } catch (error) {
-        console.error("❌ AI Generation/Validation Failed:", error);
-        throw new Error("Failed to generate valid lesson content. " + error.message);
-    }
 };
 
 /**
@@ -270,18 +315,9 @@ Generate a specific interaction that makes "${failedConcept}" click.
 `;
 
     try {
-        const puterToken = localStorage.getItem('puter.auth.token');
-        const puterAppId = localStorage.getItem('puter.app.id');
+        const response = await chatWithPuter(remedialPrompt, { model: 'gemini-2.5-flash' });
 
-        const response = await api.post('/ai/generate', {
-            prompt: remedialPrompt,
-            model: 'gemini-2.5-flash',
-            mimeType: 'application/json',
-            puterToken,
-            puterAppId
-        });
-
-        const cleanJson = response.data.message.content;
+        const cleanJson = response.message.content;
         const crumb = JSON.parse(cleanJson);
         // Minimal validation - check if tool exists
         if (!crumb.tool) throw new Error("AI failed to generate a tool.");

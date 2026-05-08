@@ -1,0 +1,113 @@
+﻿[36mvite v6.1.1 [32mbuilding for development...[36m[39m
+transforming...
+[32mΓ£ô[39m 89 modules transformed.
+node.exe : 
+[31mx[39m Build 
+failed in 2.56s
+At line:1 char:1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ([31mx   
+ [39m Build faile    
+d in 2.56s:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+[31merror during 
+build:
+[31m[vite:esbuild] 
+Transform failed 
+with 1 error:
+C:/Users/LENOVO/Proje
+cts/Crumbs-React-Fron
+tend/src/tools/ManimV
+isualizer.jsx:537:12:
+ ERROR: Expected 
+"finally" but found 
+"if"[31m
+file: [36mC:/Users/L
+ENOVO/Projects/Crumbs
+-React-Frontend/src/t
+ools/ManimVisualizer.
+jsx:537:12[31m
+[33m
+[33mExpected 
+"finally" but found 
+"if"[33m
+535|  
+536|              // 
+2. Polyfill 
+ValueTracker.animate 
+to be a Builder Proxy
+537|              if 
+(manimLib.ValueTracke
+r) {
+   |              ^
+538|                 
+     try {
+539|                 
+         if (!manimLi
+b.ValueTracker.protot
+ype.hasOwnProperty('a
+nimate')) {
+[31m
+    at 
+failureErrorWithLog (
+C:\Users\LENOVO\Proje
+cts\Crumbs-React-Fron
+tend\node_modules\esb
+uild\lib\main.js:1476
+:15)
+    at C:\Users\LENOV
+O\Projects\Crumbs-Rea
+ct-Frontend\node_modu
+les\esbuild\lib\main.
+js:755:50
+    at responseCallba
+cks.<computed> (C:\Us
+ers\LENOVO\Projects\C
+rumbs-React-Frontend\
+node_modules\esbuild\
+lib\main.js:622:9)
+    at 
+handleIncomingPacket 
+(C:\Users\LENOVO\Proj
+ects\Crumbs-React-Fro
+ntend\node_modules\es
+build\lib\main.js:677
+:12)
+    at Socket.readFro
+mStdout (C:\Users\LEN
+OVO\Projects\Crumbs-R
+eact-Frontend\node_mo
+dules\esbuild\lib\mai
+n.js:600:7)
+    at Socket.emit 
+(node:events:518:28)
+    at addChunk (node
+:internal/streams/rea
+dable:561:12)
+    at readableAddChu
+nkPushByteMode (node:
+internal/streams/read
+able:512:3)
+    at Readable.push 
+(node:internal/stream
+s/readable:392:5)
+    at 
+Pipe.onStreamRead (no
+de:internal/stream_ba
+se_commons:189:23)[3
+9m

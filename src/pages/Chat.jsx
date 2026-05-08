@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Planner.css'; // Reusing Planner CSS for consistency
 import { Send, Bot, User as UserIcon } from 'lucide-react';
+import { chatWithPuter } from '../ai/puterClient';
 
 const Chat = () => {
     const [messages, setMessages] = useState([
@@ -41,9 +42,9 @@ ${history}
 User: ${userMsg}
 AI:`;
 
-            const response = await window.puter.ai.chat(prompt);
+            const response = await chatWithPuter(prompt);
 
-            setMessages(prev => [...prev, { role: 'ai', content: response.message || response.toString() }]); // Adjust based on actual return type
+            setMessages(prev => [...prev, { role: 'ai', content: response.message?.content || response.toString() }]);
         } catch (err) {
             console.error("Chat Error", err);
             setMessages(prev => [...prev, { role: 'ai', content: "Sorry, I'm having trouble connecting to the brain rights now." }]);

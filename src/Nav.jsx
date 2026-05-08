@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Nav.css'
+import { puter } from './ai/puterClient';
 import Default from './assets/profilePic.jpg'
 import Cog from './assets/cog.svg'
 import Profile from './assets/profile.svg'
@@ -21,15 +22,15 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
 
   useEffect(() => {
     // Check initial state
-    if (window.puter && window.puter.auth && window.puter.auth.isSignedIn()) {
+    if (puter?.auth?.isSignedIn()) {
       setIsAiConnected(true);
     }
 
     // Polling for auth changes
     const interval = setInterval(async () => {
       // 1. Puter Auth
-      if (window.puter && window.puter.auth) {
-        setIsAiConnected(window.puter.auth.isSignedIn());
+      if (puter?.auth) {
+        setIsAiConnected(puter.auth.isSignedIn());
       }
     }, 5000); // Check every 5s
 
@@ -160,7 +161,7 @@ const Nav = ({ user, isVisible, closeNav, logout, toggleTheme, currentTheme }) =
                 AI Connected
               </button>
             ) : (
-              <button onClick={() => { window.puter?.auth?.signIn(); closeNav(); }} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}>
+              <button onClick={() => { puter?.auth?.signIn(); closeNav(); }} className="btn" style={{ border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', paddingLeft: '18px' }}>
                 <img src={About} style={{ marginRight: '26px' }} />
                 Connect AI
               </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { RefreshCw } from "lucide-react";
 import "./Reader.css";
 import { InlineMath, BlockMath } from 'react-katex';
@@ -6,6 +6,7 @@ import 'katex/dist/katex.min.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dummyLessons } from './lessons';
 import { generateCrumb, generateRemedialCrumb } from './ai/DavinciGenerator';
+import { chatWithPuter } from './ai/puterClient';
 import MoleculeViewer from './tools/MoleculeViewer';
 import GraphViewer from './tools/GraphViewer';
 import DesmosGrapher from './tools/DesmosGrapher';
@@ -37,6 +38,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
   const [isRemediating, setIsRemediating] = useState(false);
   const [postModal, setPostModal] = useState({ show: false, context: null });
   const [postContent, setPostContent] = useState('');
+
+  const loadingSubtopicRef = useRef(null);
 
   // Scroll Progress with Throttle
   useEffect(() => {
@@ -206,7 +209,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
 
     try {
       const prompt = `Explain this concept concisely for a student: "${text}"`;
-      const response = await window.puter.ai.chat(prompt);
+      const response = await chatWithPuter(prompt);
 
       // Handle various response formats from Puter AI
       let textResponse = '';
@@ -282,15 +285,22 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
 
   // Load lesson effect
   useEffect(() => {
+    let ignore = false;
     const loadLesson = async () => {
       // Avoid resetting if we already have the correct lesson loaded
       if (lesson && lesson.topic && lesson._subtopicId === subtopicId) {
         return;
       }
 
+      // Prevent duplicate generation if currently loading this subtopic
+      if (loadingSubtopicRef.current === subtopicId) {
+        return;
+      }
+
       setLesson(null);
       setCrumbIndex(0); // Reset crumb index on new lesson
       setShowQuiz(false); // Reset quiz state
+      loadingSubtopicRef.current = subtopicId;
 
       let rawData = null;
 
@@ -316,6 +326,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           // CHECK CACHE FIRST (Only if not retrying)
           if (subtopic && subtopic.lesson && retryCount === 0) {
             console.log("Loading lesson from cache...");
+            if (ignore) return;
+            loadingSubtopicRef.current = null;
             setLesson({ ...subtopic.lesson, _subtopicId: subtopicId });
             return;
           }
@@ -325,6 +337,8 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
               // Double check we haven't unmounted or switched topics
               rawData = await generateCrumb(course.title || course.name, subtopic.title);
             } catch (err) {
+              if (ignore) return;
+              loadingSubtopicRef.current = null;
               console.error("Davinci failed:", err);
               // Set Error State
               setLesson({ isError: true, errorMessage: err.message || "Failed to generate lesson.", _subtopicId: subtopicId });
@@ -333,6 +347,9 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
           }
         }
       }
+
+      if (ignore) return;
+      loadingSubtopicRef.current = null;
 
       if (!rawData) {
         // 3. Fallback
@@ -385,6 +402,14 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
 
     loadLesson();
     window.scrollTo(0, 0);
+
+    return () => {
+      ignore = true;
+      // Reset the loading ref so React StrictMode re-mount can proceed
+      // Without this, the ref blocks the 2nd mount while the 1st mount's
+      // result gets discarded by `ignore`, leaving lesson permanently null.
+      loadingSubtopicRef.current = null;
+    };
   }, [courseId, subtopicId, courses, retryCount]);
 
   const handleRetry = () => {
@@ -857,7 +882,7 @@ const Reader = ({ courses, onCompleteSubtopic, onSaveLesson, handleAddXP }) => {
 
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <h4 style={{ margin: 0, color: '#f1f5f9', fontSize: '0.95rem', fontWeight: '600' }}>
-                      {currentCrumb.tool.data.title || "Concept Visualizer"}
+                      {currentCrumb.tool?.data?.title || "Concept Visualizer"}
                     </h4>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                       <span style={{

@@ -25,7 +25,7 @@ const Signup = ({ setAuth }) => {
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.msg || 'Signup Failed');
+            setError(err.message || 'Signup Failed');
         }
     };
 

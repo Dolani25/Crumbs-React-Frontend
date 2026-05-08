@@ -158,8 +158,7 @@ const Course = ({ course, onDelete, onReset }) => {
       >
         <div className="course">
           <img
-            id="courseImg"
-            className="down1"
+            className="course-img down1"
             src={course.image?.url || "https://picsum.photos/seed/default/200/300"}
             onError={(e) => { e.target.onerror = null; e.target.src = "https://picsum.photos/seed/fallback/200/300"; }}
             alt={course.title || course.name}

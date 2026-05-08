@@ -24,10 +24,13 @@ router.post('/generate', async (req, res) => {
 
         // Let's try to target the exact endpoint user saw: https://api.puter.com/drivers/call
         const payload = {
-            interface: "puter-chat-completion-interface-v1",
-            driver: model || 'gemini-2.5-flash',
-            method: "chat",
-            args: [prompt, { responseInfo: { mimeType } }]
+            interface: "puter-chat-completion",
+            driver: "ai-chat",
+            method: "complete",
+            args: {
+                messages: [{ content: prompt }],
+                model: model || 'gemini-2.5-flash'
+            }
         };
 
         const headers = {
@@ -63,8 +66,13 @@ router.post('/generate', async (req, res) => {
 
         const response = await axios.post('https://api.puter.com/drivers/call', payload, { headers });
 
-        // The response structure from Puter's driver
-        res.json(response.data);
+        console.log("✅ Puter response received! Data preview:", JSON.stringify(response.data || {}).slice(0, 200));
+        
+        // The raw driver API usually wraps the return value in a "result" object.
+        // We unpack it so the frontend gets exactly what window.puter.ai.chat used to return.
+        const output = response.data?.result ? response.data.result : response.data;
+        
+        res.json(output);
 
     } catch (err) {
         console.error("❌ AI Proxy Error Status:", err.response?.status);

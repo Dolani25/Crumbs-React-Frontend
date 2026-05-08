@@ -45,10 +45,12 @@ function App() {
   // Helper: Load & Sync Courses from Cloud/Local
   // Defined here to be accessible by both checkAuth and setAuth
   const loadAndSyncCourses = async () => {
+    // 1. Optimistic Load (Show what we have immediately)
     const local = (await secureStorage.getItem('crumbs_courses')) || [];
+    let initialCourses = [];
 
     if (local.length > 0) {
-      const normalizedLocal = local
+      initialCourses = local
         .flat()
         .filter(c => {
           // Only keep courses with valid titles
@@ -61,26 +63,45 @@ function App() {
           title: c.title || c.name
         }));
 
-      // Sync with Cloud Truth
+      // Update State Immediately to Unblock UI
+      setCourses(initialCourses);
+    }
+
+    // 2. Background Sync (Fire and Forget)
+    // We execute this async function without awaiting it, so checkAuth proceeds immediately.
+    const runBackgroundSync = async () => {
       try {
-        const cloudCourses = await syncCourses(normalizedLocal);
-        setCourses(cloudCourses);
-        await secureStorage.setItem('crumbs_courses', cloudCourses);
-        console.log("☁️  Secure Sync Complete");
+        if (initialCourses.length > 0) {
+          // Push Local Changes / Merge with Cloud
+          const cloudCourses = await syncCourses(initialCourses);
+          setCourses(cloudCourses);
+          await secureStorage.setItem('crumbs_courses', cloudCourses);
+          console.log("☁️  Secure Sync Complete");
+        } else {
+          // Empty Local: Pull from Cloud
+          const cloudCourses = await syncCourses([]);
+          if (cloudCourses && cloudCourses.length > 0) {
+            setCourses(cloudCourses);
+            await secureStorage.setItem('crumbs_courses', cloudCourses);
+          }
+        }
       } catch (syncErr) {
         console.warn("Sync warning:", syncErr);
-        // Fallback: If sync fails (e.g. data conflict), fetch fresh from cloud
-        const fresh = await syncCourses([]);
-        if (fresh) setCourses(fresh);
+        // Fallback: If push fails (e.g. data conflict), try fresh pull
+        try {
+          const fresh = await syncCourses([]);
+          if (fresh) {
+            setCourses(fresh);
+            await secureStorage.setItem('crumbs_courses', fresh);
+          }
+        } catch (e) {
+          console.error("Critical Sync Failure", e);
+        }
       }
-    } else {
-      // EMPTY LOCAL: Fetch from Cloud (Pull Strategy)
-      const cloudCourses = await syncCourses([]);
-      if (cloudCourses && cloudCourses.length > 0) {
-        setCourses(cloudCourses);
-        await secureStorage.setItem('crumbs_courses', cloudCourses);
-      }
-    }
+    };
+
+    // Trigger Background Sync (Non-blocking)
+    runBackgroundSync();
   };
 
   // Check Auth on Mount
@@ -494,11 +515,17 @@ function App() {
   const setAuth = (bool) => {
     // Reload user data if strictly setting true (e.g. after login)
     if (bool) {
-      loadUser().then(async (data) => {
-        setUser({ ...data, is_authenticated: true });
-        // ☁️ Auto-Sync Immediately on Login
-        await loadAndSyncCourses();
-      });
+      loadUser()
+        .then(async (data) => {
+          setUser({ ...data, is_authenticated: true });
+          // ☁️ Auto-Sync Immediately on Login
+          await loadAndSyncCourses();
+        })
+        .catch(err => {
+          console.error("Login verification failed:", err);
+          setUser(null);
+          secureStorage.removeItem('crumbs_token');
+        });
     } else {
       setUser(null);
     }

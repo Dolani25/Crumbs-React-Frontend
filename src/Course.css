@@ -54,7 +54,7 @@ div>h2 {
   border-radius: 999px;
 }
 
-#courseImg {
+.course-img {
   height: 80px;
   width: 80px;
   border-radius: 8px;
@@ -131,7 +131,7 @@ div>h2 {
     border: 1px solid var(--border-color);
   }
 
-  #courseImg {
+  .course-img {
     width: 100%;
     /* Full width */
     height: 180px;
@@ -168,4 +168,13 @@ div>h2 {
   .add-course-card h3 {
     font-size: 1.2rem;
   }
+}
+
+.empty-dashboard-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  width: 100%;
+  padding: 20px;
 }

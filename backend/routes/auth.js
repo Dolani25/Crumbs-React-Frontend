@@ -11,14 +11,13 @@ const User = require('../models/User');
 // @access  Public
 router.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
-    const mongoose = require('mongoose');
-
-    // MOCK MODE check removed
+    console.log(`📝 Signup attempt for: ${email} (${username})`);
 
     try {
         // 1. Check if user exists
         let user = await User.findOne({ email });
         if (user) {
+            console.log(`❌ User already exists: ${email}`);
             return res.status(400).json({ msg: 'User already exists' });
         }
 
@@ -33,6 +32,7 @@ router.post('/signup', async (req, res) => {
         user.passwordHash = await bcrypt.hash(password, salt);
 
         await user.save();
+        console.log(`✅ User registered successfully: ${email}`);
 
         // 3. Return JWT
         const payload = {
@@ -46,12 +46,15 @@ router.post('/signup', async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '7d' }, // 1 week session
             (err, token) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('JWT Sign Error:', err);
+                    throw err;
+                }
                 res.json({ token });
             }
         );
     } catch (err) {
-        console.error(err.message);
+        console.error('Signup Error:', err.message);
         res.status(500).send('Server error');
     }
 });
@@ -61,20 +64,20 @@ router.post('/signup', async (req, res) => {
 // @access  Public
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
-    const mongoose = require('mongoose');
-
-    // MOCK MODE check removed
+    console.log(`🔑 Login attempt for: ${email}`);
 
     try {
         // 1. Check if user exists
         let user = await User.findOne({ email });
         if (!user) {
+            console.log(`❌ User not found: ${email}`);
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
 
         // 2. Match password
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch) {
+            console.log(`❌ Password mismatch for: ${email}`);
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
 
@@ -90,12 +93,16 @@ router.post('/login', async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '7d' },
             (err, token) => {
-                if (err) throw err;
+                if (err) {
+                    console.error('JWT Sign Error:', err);
+                    throw err;
+                }
+                console.log(`✅ Login successful for: ${email}`);
                 res.json({ token });
             }
         );
     } catch (err) {
-        console.error(err.message);
+        console.error('Login Error:', err.message);
         res.status(500).send('Server error');
     }
 });

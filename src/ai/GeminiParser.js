@@ -1,9 +1,8 @@
 
+import { chatWithPuter } from './puterClient';
+
 // Use Puter.js for AI Parsing (No API Key needed)
 export const parseCourseWithGemini = async (text) => {
-    if (!window.puter) {
-        throw new Error("Puter.js is not loaded.");
-    }
 
     try {
         const prompt = `
@@ -39,8 +38,7 @@ export const parseCourseWithGemini = async (text) => {
         ${text.substring(0, 30000)}
         `;
 
-        // Puter.js call - Using Gemini 2.5 Flash for speed/context
-        const response = await window.puter.ai.chat(prompt, { model: 'gemini-2.5-flash' });
+        const response = await chatWithPuter(prompt, { model: 'gemini-2.5-flash' });
 
         // Extract content
         let jsonString = response.message.content;

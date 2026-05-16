@@ -40,7 +40,7 @@
     "p5": "^2.2.0",
     "pdfjs-dist": "^5.4.530",
     "pydantic": "^0.0.1-security",
-    "react": "^19.0.0",
+    "react": "^19.2.3",
     "react-dom": "^19.0.0",
     "react-force-graph-3d": "^1.29.0",
     "react-katex": "^3.1.0",
